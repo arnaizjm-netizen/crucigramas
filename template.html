@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>__TITLE__</title>
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --panel-bg: #ffffff;
+    --text: #1f2320;
+    --muted: #6b6f6c;
+    --accent: #2f6f4f;
+    --accent-dark: #1f5138;
+    --danger: #b3372c;
+    --danger-dark: #8c2b22;
+    --select-row: #cfe3ff;
+    --select-word: #8fb8ff;
+    --cell-border: #b8b8b8;
+    --grid-outer: #1f2320;
+    --wrong: #b3372c;
+    --empty-hint: #e8b23b;
+    --win: #2f8f3f;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 10px 40px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: clamp(1.1rem, 4vw, 1.6rem);
+    margin: 4px 0 10px;
+    text-align: center;
+  }
+  .toolbar {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .timer {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: var(--panel-bg);
+    border-radius: 8px;
+    padding: 6px 12px;
+    min-width: 84px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    background: var(--panel-bg);
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  button:active { transform: translateY(1px); }
+  #checkBtn.is-checking {
+    background: var(--danger);
+    color: #fff;
+  }
+  #resetBtn { color: var(--muted); }
+  #saveImgBtn {
+    background: var(--win);
+    color: #fff;
+    display: none;
+  }
+  .grid-wrap {
+    width: 100%;
+    max-width: 640px;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .grid {
+    display: grid;
+    border: 2px solid var(--grid-outer);
+    background: var(--grid-outer);
+    gap: 1px;
+    width: min(94vw, 70vh, 640px);
+    aspect-ratio: 1 / 1;
+  }
+  .hdr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: clamp(0.5rem, 1.6vw, 0.85rem);
+    font-weight: 600;
+    user-select: none;
+  }
+  .corner { background: var(--bg); }
+  .cell-black {
+    background: #111;
+  }
+  .cell-white {
+    position: relative;
+    background: #fff;
+  }
+  .cell-white input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: clamp(0.7rem, 2.6vw, 1.15rem);
+    font-family: inherit;
+    color: var(--text);
+    padding: 0;
+    caret-color: transparent;
+  }
+  .cell-white input:focus { outline: none; }
+  .cell-white.sel-row { background: var(--select-row); }
+  .cell-white.sel-word { background: var(--select-word); }
+  .cell-white.sel-active { background: #fff29a; }
+  .cell-white.cell-wrong input { color: var(--wrong); }
+  .cell-white.cell-empty { box-shadow: inset 0 0 0 2px var(--empty-hint); }
+  .cell-white.cell-correct input { color: var(--text); }
+  .cell-white.cell-win { background: #e9f7ec; }
+  .cell-white.cell-win input { color: var(--win); }
+
+  .defs-panel {
+    width: 100%;
+    max-width: 640px;
+    background: var(--panel-bg);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    min-height: 3.2em;
+  }
+  .defs-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .defs-text {
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+  .win-banner {
+    width: 100%;
+    max-width: 640px;
+    background: #e9f7ec;
+    border: 1px solid var(--win);
+    color: var(--accent-dark);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    text-align: center;
+    display: none;
+  }
+  .win-banner.show { display: block; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+  .toast.show { opacity: 0.95; }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17191a;
+      --panel-bg: #232626;
+      --text: #ecece7;
+      --muted: #9a9d99;
+      --cell-border: #444;
+      --grid-outer: #050505;
+      --select-row: #234a72;
+      --select-word: #2f6fb0;
+      --sel-active: #6b5c14;
+      --win: #4caf6a;
+    }
+    .cell-white { background: #fdfdfb; }
+    .cell-white input { color: #111; }
+    .win-banner { background: #163420; color: #bdeecb; }
+  }
+</style>
+</head>
+<body>
+  <h1 id="titleEl">__TITLE__</h1>
+
+  <div class="toolbar">
+    <div class="timer" id="timerEl">00:00</div>
+    <div class="buttons">
+      <button id="checkBtn" type="button">Comprobar</button>
+      <button id="resetBtn" type="button">Reiniciar</button>
+      <button id="saveImgBtn" type="button">Guardar imagen</button>
+    </div>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="grid" id="gridEl"></div>
+  </div>
+
+  <div class="defs-panel">
+    <div class="defs-label" id="defsLabel">Definicion</div>
+    <div class="defs-text" id="defsText">Toca una casilla para empezar.</div>
+  </div>
+
+  <div class="win-banner" id="winBanner"></div>
+
+  <div class="toast" id="toastEl"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = __DATA_JSON__;
+  var N = DATA.size;
+  var STORAGE_KEY = "crossword_state_" + DATA.id;
+
+  // ---------- estado ----------
+  var state = {
+    grid: [],           // NxN letras del usuario ("" = vacia)
+    selR: 0, selC: 0,
+    dir: "H",
+    checking: false,
+    finished: false,
+    elapsedMs: 0,
+    finalElapsedMs: null
+  };
+
+  for (var r = 0; r < N; r++) {
+    var row = [];
+    for (var c = 0; c < N; c++) row.push("");
+    state.grid.push(row);
+  }
+
+  // encuentra la primera casilla blanca para seleccion inicial
+  (function findFirstWhite() {
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (!DATA.black[r][c]) { state.selR = r; state.selC = c; return; }
+      }
+    }
+  })();
+
+  // ---------- persistencia ----------
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        grid: state.grid,
+        selR: state.selR, selC: state.selC, dir: state.dir,
+        finished: state.finished,
+        elapsedMs: state.elapsedMs,
+        finalElapsedMs: state.finalElapsedMs
+      }));
+    } catch (e) { /* almacenamiento no disponible: se ignora */ }
+  }
+
+  function loadState() {
+    var raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var saved;
+    try { saved = JSON.parse(raw); } catch (e) { return; }
+    if (!saved || !saved.grid) return;
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (saved.grid[r] && typeof saved.grid[r][c] === "string") {
+          state.grid[r][c] = saved.grid[r][c];
+        }
+      }
+    }
+    if (typeof saved.selR === "number") state.selR = saved.selR;
+    if (typeof saved.selC === "number") state.selC = saved.selC;
+    if (saved.dir === "H" || saved.dir === "V") state.dir = saved.dir;
+    state.finished = !!saved.finished;
+    state.elapsedMs = typeof saved.elapsedMs === "number" ? saved.elapsedMs : 0;
+    state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
+  }
+
+  loadState();
+
+  // ---------- construccion del tablero ----------
+  var gridEl = document.getElementById("gridEl");
+  gridEl.style.gridTemplateColumns = "repeat(" + (N + 1) + ", 1fr)";
+  gridEl.style.gridTemplateRows = "repeat(" + (N + 1) + ", 1fr)";
+
+  var inputs = []; // inputs[r][c]
+
+  var corner = document.createElement("div");
+  corner.className = "hdr corner";
+  gridEl.appendChild(corner);
+  for (var c0 = 0; c0 < N; c0++) {
+    var colHdr = document.createElement("div");
+    colHdr.className = "hdr";
+    colHdr.textContent = String(c0 + 1);
+    gridEl.appendChild(colHdr);
+  }
+
+  for (var r0 = 0; r0 < N; r0++) {
+    var rowHdr = document.createElement("div");
+    rowHdr.className = "hdr";
+    rowHdr.textContent = String(r0 + 1);
+    gridEl.appendChild(rowHdr);
+
+    var inputRow = [];
+    for (var c1 = 0; c1 < N; c1++) {
+      if (DATA.black[r0][c1]) {
+        var blk = document.createElement("div");
+        blk.className = "cell-black";
+        gridEl.appendChild(blk);
+        inputRow.push(null);
+      } else {
+        var cellDiv = document.createElement("div");
+        cellDiv.className = "cell-white";
+        var inp = document.createElement("input");
+        inp.setAttribute("autocomplete", "off");
+        inp.setAttribute("autocapitalize", "characters");
+        inp.setAttribute("autocorrect", "off");
+        inp.setAttribute("spellcheck", "false");
+        inp.setAttribute("inputmode", "text");
+        inp.dataset.r = r0;
+        inp.dataset.c = c1;
+        if (state.grid[r0][c1]) inp.value = state.grid[r0][c1];
+        cellDiv.appendChild(inp);
+        gridEl.appendChild(cellDiv);
+        inputRow.push(inp);
+      }
+    }
+    inputs.push(inputRow);
+  }
+
+  function cellDivOf(r, c) { return inputs[r][c] ? inputs[r][c].parentElement : null; }
+
+  // ---------- segmentos ----------
+  function segIdFor(r, c, dir) {
+    return dir === "H" ? DATA.cellSegH[r][c] : DATA.cellSegV[r][c];
+  }
+  function segOf(id) { return DATA.segments[id]; }
+
+  function buildSegOrder(dirLetter) {
+    var ids = Object.keys(DATA.segments).filter(function (id) { return DATA.segments[id].dir === dirLetter; });
+    ids.sort(function (a, b) {
+      var pa = segOf(a).cells[0], pb = segOf(b).cells[0];
+      return dirLetter === "H" ? (pa[0] - pb[0] || pa[1] - pb[1]) : (pa[1] - pb[1] || pa[0] - pb[0]);
+    });
+    return ids;
+  }
+  var segOrderH = buildSegOrder("H");
+  var segOrderV = buildSegOrder("V");
+
+  function pickDirection(r, c, preferred) {
+    var hId = DATA.cellSegH[r][c], vId = DATA.cellSegV[r][c];
+    var hLen = hId ? segOf(hId).cells.length : 0;
+    var vLen = vId ? segOf(vId).cells.length : 0;
+    if (preferred === "H" && hLen > 1) return "H";
+    if (preferred === "V" && vLen > 1) return "V";
+    if (hLen > 1) return "H";
+    if (vLen > 1) return "V";
+    return preferred;
+  }
+
+  // ---------- seleccion / resaltado ----------
+  function clearHighlight() {
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var d = cellDivOf(r, c);
+        if (d) d.classList.remove("sel-row", "sel-word", "sel-active");
+      }
+    }
+  }
+
+  function applyHighlight() {
+    clearHighlight();
+    var segId = segIdFor(state.selR, state.selC, state.dir);
+    if (segId) {
+      var seg = segOf(segId);
+      seg.cells.forEach(function (rc) {
+        var d = cellDivOf(rc[0], rc[1]);
+        if (d) d.classList.add("sel-word");
+      });
+    }
+    var active = cellDivOf(state.selR, state.selC);
+    if (active) active.classList.add("sel-active");
+  }
+
+  function updateDefs() {
+    var segId = segIdFor(state.selR, state.selC, state.dir);
+    var labelEl = document.getElementById("defsLabel");
+    var textEl = document.getElementById("defsText");
+    if (!segId) {
+      labelEl.textContent = "Definicion";
+      textEl.textContent = "Toca una casilla para empezar.";
+      return;
+    }
+    var seg = segOf(segId);
+    labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
+    textEl.textContent = seg.clue;
+  }
+
+  function selectCell(r, c, preferredDir, force) {
+    state.selR = r; state.selC = c;
+    state.dir = force ? preferredDir : pickDirection(r, c, preferredDir || state.dir);
+    applyHighlight();
+    updateDefs();
+  }
+
+  // ---------- navegacion dentro de un tramo ----------
+  function neighborInSegment(r, c, dir, delta) {
+    var segId = segIdFor(r, c, dir);
+    if (!segId) return null;
+    var cells = segOf(segId).cells;
+    var idx = cells.findIndex(function (rc) { return rc[0] === r && rc[1] === c; });
+    var next = cells[idx + delta];
+    return next || null;
+  }
+
+  // cuando force es true, la direccion pedida se respeta aunque el tramo en
+  // esa direccion mida 1 sola casilla (p.ej. saltos de Tab o flechas)
+  var forcedDirForNextFocus = null;
+
+  function moveTo(r, c, preferredDir, force) {
+    if (!inputs[r] || !inputs[r][c]) return;
+    if (force) forcedDirForNextFocus = preferredDir;
+    inputs[r][c].focus();
+    selectCell(r, c, preferredDir, force);
+    forcedDirForNextFocus = null;
+  }
+
+  // ---------- comprobacion ----------
+  function isGridFull() {
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++)
+        if (!DATA.black[r][c] && !state.grid[r][c]) return false;
+    return true;
+  }
+
+  function isGridAllCorrect() {
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++)
+        if (!DATA.black[r][c] && state.grid[r][c] !== DATA.solution[r][c]) return false;
+    return true;
+  }
+
+  function clearCheckStyles() {
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++) {
+        var d = cellDivOf(r, c);
+        if (d) d.classList.remove("cell-wrong", "cell-empty", "cell-correct");
+      }
+  }
+
+  var checkBtn = document.getElementById("checkBtn");
+  var CHECK_LABEL_IDLE = "Comprobar";
+  var CHECK_LABEL_ACTIVE = "Volver a normal";
+
+  function enterCheckMode() {
+    state.checking = true;
+    checkBtn.classList.add("is-checking");
+    checkBtn.textContent = CHECK_LABEL_ACTIVE;
+  }
+
+  function exitCheckMode() {
+    state.checking = false;
+    checkBtn.classList.remove("is-checking");
+    checkBtn.textContent = CHECK_LABEL_IDLE;
+  }
+
+  function toggleCheck() {
+    if (state.finished) return;
+    var anyFilled = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
+    if (!anyFilled && !state.checking) {
+      showToast("Escribe alguna letra antes de comprobar.");
+      return;
+    }
+    if (state.checking) {
+      exitCheckMode();
+      clearCheckStyles();
+      return;
+    }
+    if (isGridFull() && isGridAllCorrect()) {
+      finishGame();
+      return;
+    }
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        var d = cellDivOf(r, c);
+        if (!d) continue;
+        if (!state.grid[r][c]) {
+          d.classList.add("cell-empty");
+        } else if (state.grid[r][c] !== DATA.solution[r][c]) {
+          d.classList.add("cell-wrong");
+        } else {
+          d.classList.add("cell-correct");
+        }
+      }
+    }
+    enterCheckMode();
+  }
+  checkBtn.addEventListener("click", toggleCheck);
+
+  // ---------- reinicio ----------
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Esto borrara todo el progreso de esta partida. Continuar?")) return;
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        state.grid[r][c] = "";
+        if (inputs[r][c]) inputs[r][c].value = "";
+      }
+    }
+    state.finished = false;
+    state.elapsedMs = 0;
+    state.finalElapsedMs = null;
+    exitCheckMode();
+    clearCheckStyles();
+    document.getElementById("saveImgBtn").style.display = "none";
+    document.getElementById("winBanner").classList.remove("show");
+    pauseTimer();
+    renderTimer(0);
+    saveState();
+    selectCell(state.selR, state.selC, state.dir);
+  });
+
+  // ---------- temporizador ----------
+  var timerEl = document.getElementById("timerEl");
+  var timerActive = false;
+  var resumeAt = null;
+  var tickHandle = null;
+
+  function renderTimer(ms) {
+    var totalSec = Math.floor(ms / 1000);
+    var mm = Math.floor(totalSec / 60);
+    var ss = totalSec % 60;
+    var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+    timerEl.textContent = pad(mm) + ":" + pad(ss);
+  }
+
+  function tick() {
+    renderTimer(state.elapsedMs + (Date.now() - resumeAt));
+  }
+
+  function ensureTimerRunning() {
+    if (state.finished || timerActive) return;
+    timerActive = true;
+    resumeAt = Date.now();
+    tickHandle = setInterval(tick, 250);
+  }
+
+  function pauseTimer() {
+    if (!timerActive) return;
+    state.elapsedMs += Date.now() - resumeAt;
+    timerActive = false;
+    clearInterval(tickHandle);
+  }
+
+  window.addEventListener("visibilitychange", function () {
+    if (document.hidden) { pauseTimer(); saveState(); }
+    else if (!state.finished && state.grid.some(function (row) { return row.some(function (v) { return v; }); })) {
+      ensureTimerRunning();
+    }
+  });
+  window.addEventListener("pagehide", function () { pauseTimer(); saveState(); });
+
+  // ---------- victoria ----------
+  function finishGame() {
+    pauseTimer();
+    state.finished = true;
+    state.finalElapsedMs = state.elapsedMs;
+    renderTimer(state.finalElapsedMs);
+    clearCheckStyles();
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var d = cellDivOf(r, c);
+        if (d) d.classList.add("cell-win");
+      }
+    }
+    exitCheckMode();
+    var totalSec = Math.floor(state.finalElapsedMs / 1000);
+    var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
+    var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+    var banner = document.getElementById("winBanner");
+    banner.textContent = "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
+    banner.classList.add("show");
+    document.getElementById("saveImgBtn").style.display = "inline-block";
+    saveState();
+  }
+
+  // ---------- exportar imagen ----------
+  document.getElementById("saveImgBtn").addEventListener("click", function () {
+    var cell = 34, pad = 30;
+    var w = pad + N * cell, h = pad + N * cell;
+    var canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillStyle = "#555555";
+    for (var i = 0; i < N; i++) {
+      ctx.fillText(String(i + 1), pad + i * cell + cell / 2, pad / 2);
+      ctx.fillText(String(i + 1), pad / 2, pad + i * cell + cell / 2);
+    }
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var x = pad + c * cell, y = pad + r * cell;
+        if (DATA.black[r][c]) {
+          ctx.fillStyle = "#111111";
+          ctx.fillRect(x, y, cell, cell);
+        } else {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(x, y, cell, cell);
+          ctx.strokeStyle = "#bbbbbb";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+          ctx.fillStyle = "#2f8f3f";
+          ctx.font = "bold 18px sans-serif";
+          ctx.fillText(state.grid[r][c] || "", x + cell / 2, y + cell / 2 + 1);
+        }
+      }
+    }
+    canvas.toBlob(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      var safeName = DATA.name.replace(/[^a-z0-9]+/gi, "_");
+      a.href = url;
+      a.download = safeName + "_resuelto.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    });
+  });
+
+  // ---------- toast ----------
+  var toastEl = document.getElementById("toastEl");
+  var toastTimeout = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
+  }
+
+  // ---------- eventos de casillas ----------
+  for (var r2 = 0; r2 < N; r2++) {
+    for (var c2 = 0; c2 < N; c2++) {
+      (function (r, c) {
+        var inp = inputs[r][c];
+        if (!inp) return;
+
+        inp.addEventListener("pointerdown", function () {
+          if (document.activeElement === inp && state.selR === r && state.selC === c) {
+            var other = state.dir === "H" ? "V" : "H";
+            var segId = segIdFor(r, c, other);
+            if (segId && segOf(segId).cells.length > 1) {
+              state.dir = other;
+              applyHighlight();
+              updateDefs();
+            }
+          }
+        });
+
+        inp.addEventListener("focus", function () {
+          if (forcedDirForNextFocus) {
+            selectCell(r, c, forcedDirForNextFocus, true);
+          } else {
+            selectCell(r, c, state.dir);
+          }
+          // selecciona el contenido existente para que la siguiente tecla
+          // sobrescriba la letra anterior en vez de quedar bloqueada por maxlength
+          inp.select();
+          if (window.innerWidth < 700) {
+            setTimeout(function () {
+              inp.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+            }, 100);
+          }
+        });
+
+        inp.addEventListener("input", function () {
+          var raw = inp.value.replace(/[^A-Za-zÑñ]/g, "");
+          var letter = raw.slice(-1).toUpperCase();
+          inp.value = letter;
+          state.grid[r][c] = letter;
+
+          if (state.checking) {
+            exitCheckMode();
+            clearCheckStyles();
+          }
+
+          if (letter) {
+            var hasAny = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
+            if (hasAny) ensureTimerRunning();
+            var next = neighborInSegment(r, c, state.dir, 1);
+            if (next) moveTo(next[0], next[1], state.dir);
+          }
+
+          saveState();
+
+          if (isGridFull() && isGridAllCorrect()) {
+            finishGame();
+          }
+        });
+
+        inp.addEventListener("keydown", function (e) {
+          if (state.finished) return;
+          switch (e.key) {
+            case "Backspace": {
+              e.preventDefault();
+              if (state.checking) {
+                exitCheckMode(); clearCheckStyles();
+              }
+              if (state.grid[r][c]) {
+                state.grid[r][c] = "";
+                inp.value = "";
+                saveState();
+              } else {
+                var prev = neighborInSegment(r, c, state.dir, -1);
+                if (prev) {
+                  state.grid[prev[0]][prev[1]] = "";
+                  if (inputs[prev[0]][prev[1]]) inputs[prev[0]][prev[1]].value = "";
+                  moveTo(prev[0], prev[1], state.dir);
+                  saveState();
+                }
+              }
+              break;
+            }
+            case "Delete": {
+              e.preventDefault();
+              state.grid[r][c] = "";
+              inp.value = "";
+              saveState();
+              break;
+            }
+            case "Tab": {
+              e.preventDefault();
+              var order = state.dir === "H" ? segOrderH : segOrderV;
+              var curId = segIdFor(r, c, state.dir);
+              var idx = order.indexOf(curId);
+              var delta = e.shiftKey ? -1 : 1;
+              var nextIdx = (idx + delta + order.length) % order.length;
+              var nextSeg = segOf(order[nextIdx]);
+              var target = nextSeg.cells[0];
+              moveTo(target[0], target[1], state.dir, true);
+              break;
+            }
+            case "ArrowLeft": case "ArrowRight": case "ArrowUp": case "ArrowDown": {
+              e.preventDefault();
+              var dir = (e.key === "ArrowLeft" || e.key === "ArrowRight") ? "H" : "V";
+              var delta = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1 : -1;
+              var nr = r + (dir === "V" ? delta : 0);
+              var nc = c + (dir === "H" ? delta : 0);
+              if (nr >= 0 && nr < N && nc >= 0 && nc < N && inputs[nr][nc]) {
+                moveTo(nr, nc, dir, true);
+              }
+              break;
+            }
+          }
+        });
+      })(r2, c2);
+    }
+  }
+
+  // ---------- estado inicial al cargar ----------
+  (function initFromLoadedState() {
+    var hasAny = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
+    if (state.finished) {
+      finishGame();
+    } else if (hasAny) {
+      ensureTimerRunning();
+    }
+    renderTimer(state.elapsedMs);
+    selectCell(state.selR, state.selC, state.dir);
+  })();
+
+})();
+</script>
+</body>
+</html>
