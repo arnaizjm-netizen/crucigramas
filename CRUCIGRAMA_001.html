@@ -697,7 +697,7 @@
           if (document.activeElement === inp && state.selR === r && state.selC === c) {
             var other = state.dir === "H" ? "V" : "H";
             var segId = segIdFor(r, c, other);
-            if (segId && segOf(segId).cells.length > 1) {
+            if (segId) {
               state.dir = other;
               applyHighlight();
               updateDefs();
