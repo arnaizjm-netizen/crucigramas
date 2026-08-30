@@ -40,8 +40,23 @@
   }
   h1 {
     font-size: clamp(1.1rem, 4vw, 1.6rem);
-    margin: 4px 0 10px;
+    margin: 4px 0 2px;
     text-align: center;
+  }
+  .tagline {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+    margin: 0 0 4px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .ia-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: center;
+    margin: 0 0 12px;
+    font-style: italic;
   }
   .toolbar {
     width: 100%;
@@ -220,6 +235,8 @@
 </head>
 <body>
   <h1 id="titleEl">CRUCIGRAMA 001</h1>
+  <div class="tagline">Crucigrama Gamberro</div>
+  <div class="ia-note">Usar IA no es trampa. Aviso: unas veces ayuda, las más no.</div>
 
   <div class="toolbar">
     <div class="timer" id="timerEl">00:00</div>
