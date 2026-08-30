@@ -141,6 +141,7 @@
     color: var(--text);
     padding: 0;
     caret-color: transparent;
+    -webkit-touch-callout: none;
   }
   .cell-white input:focus { outline: none; }
   .cell-white.sel-row { background: var(--select-row); }
@@ -693,6 +694,9 @@
         var inp = inputs[r][c];
         if (!inp) return;
 
+        // evita el menu de Copiar/Pegar/Buscar que iOS muestra al seleccionar texto
+        inp.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
         inp.addEventListener("pointerdown", function () {
           if (document.activeElement === inp && state.selR === r && state.selC === c) {
             var other = state.dir === "H" ? "V" : "H";
@@ -711,8 +715,6 @@
           } else {
             selectCell(r, c, state.dir);
           }
-          // selecciona el contenido existente para que la siguiente tecla
-          // sobrescriba la letra anterior en vez de quedar bloqueada por maxlength
           inp.select();
           if (window.innerWidth < 700) {
             setTimeout(function () {
