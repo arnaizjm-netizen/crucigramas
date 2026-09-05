@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Crucigrama gamberro - 004</title>
+<script data-goatcounter="https://recreozone.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
   :root {
     --bg: #f4f3ef;
@@ -621,6 +622,7 @@
 
   // ---------- victoria ----------
   function finishGame() {
+    var isNewCompletion = !state.finished;
     pauseTimer();
     state.finished = true;
     state.finalElapsedMs = state.elapsedMs;
@@ -641,6 +643,13 @@
     banner.classList.add("show");
     document.getElementById("saveImgBtn").style.display = "inline-block";
     saveState();
+    if (isNewCompletion && window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({
+        path: location.pathname.replace(/\/$/, "") + "-completado",
+        title: "Crucigrama completado",
+        event: true,
+      });
+    }
   }
 
   // ---------- exportar imagen ----------
