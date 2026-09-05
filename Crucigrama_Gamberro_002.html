@@ -704,7 +704,7 @@
   // ---------- copiar definicion al portapapeles ----------
   document.querySelector(".defs-panel").addEventListener("click", function () {
     if (!currentDefSeg) return;
-    var preamble = "Voy a darte una definición de un crucigrama. Échame una mano.";
+    var preamble = "Voy a darte una definición de un crucigrama. Échame una mano sin revelarme la solución.";
     var text = preamble + "\n\n" + currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
       showToast("No se pudo copiar");
