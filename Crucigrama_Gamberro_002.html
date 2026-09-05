@@ -172,7 +172,9 @@
     position: sticky;
     top: 0;
     z-index: 5;
+    cursor: pointer;
   }
+  .defs-panel:active { opacity: 0.8; }
   .defs-label {
     font-size: 0.8rem;
     color: var(--muted);
@@ -236,7 +238,7 @@
 </head>
 <body>
   <h1 id="titleEl">Crucigrama Gamberro 002</h1>
-  <div class="ia-note">Usar IA no es trampa. Aviso: unas veces ayuda, en las más, no.</div>
+  <div class="ia-note">Usar IA para resolver es aceptable. Si haces clic en una definición, se copia en el portapapeles.</div>
 
   <div class="toolbar">
     <div class="timer" id="timerEl">00:00</div>
@@ -435,16 +437,20 @@
     if (active) active.classList.add("sel-active");
   }
 
+  var currentDefSeg = null;
+
   function updateDefs() {
     var segId = segIdFor(state.selR, state.selC, state.dir);
     var labelEl = document.getElementById("defsLabel");
     var textEl = document.getElementById("defsText");
     if (!segId) {
+      currentDefSeg = null;
       labelEl.textContent = "Definicion";
       textEl.textContent = "Toca una casilla para empezar.";
       return;
     }
     var seg = segOf(segId);
+    currentDefSeg = seg;
     labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
     textEl.textContent = seg.clue;
   }
@@ -694,6 +700,21 @@
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
   }
+
+  // ---------- copiar definicion al portapapeles ----------
+  document.querySelector(".defs-panel").addEventListener("click", function () {
+    if (!currentDefSeg) return;
+    var text = currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      showToast("No se pudo copiar");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(function () {
+      showToast("Copiado ✓");
+    }).catch(function () {
+      showToast("No se pudo copiar");
+    });
+  });
 
   // ---------- eventos de casillas ----------
   for (var r2 = 0; r2 < N; r2++) {
