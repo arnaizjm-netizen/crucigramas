@@ -238,7 +238,7 @@
 </head>
 <body>
   <h1 id="titleEl">Crucigrama gamberro - 003</h1>
-  <div class="ia-note">Usar IA para resolver es aceptable. Si haces clic en una definición, se copia en el portapapeles.</div>
+  <div class="ia-note">Si necesitas ayuda, pídela a la IA: clic en la definición para copiarla.</div>
 
   <div class="toolbar">
     <div class="timer" id="timerEl">00:00</div>
@@ -704,7 +704,8 @@
   // ---------- copiar definicion al portapapeles ----------
   document.querySelector(".defs-panel").addEventListener("click", function () {
     if (!currentDefSeg) return;
-    var text = currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
+    var preamble = "Voy a darte una definición de un crucigrama gamberro. Échame una mano.";
+    var text = preamble + "\n\n" + currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
       showToast("No se pudo copiar");
       return;
