@@ -200,6 +200,21 @@
     display: none;
   }
   .win-banner.show { display: block; }
+  .feedback-link {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    background: var(--accent);
+    color: #ffffff;
+    text-decoration: none;
+    text-align: center;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 12px;
+  }
+  .feedback-link.show { display: block; }
   .toast {
     position: fixed;
     bottom: 20px;
@@ -260,6 +275,7 @@
   </div>
 
   <div class="win-banner" id="winBanner"></div>
+  <a class="feedback-link" id="feedbackLink" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Danos tu opinión</a>
 
   <div class="toast" id="toastEl"></div>
 
@@ -574,6 +590,7 @@
     clearCheckStyles();
     document.getElementById("saveImgBtn").style.display = "none";
     document.getElementById("winBanner").classList.remove("show");
+    document.getElementById("feedbackLink").classList.remove("show");
     pauseTimer();
     renderTimer(0);
     saveState();
@@ -642,6 +659,7 @@
     banner.textContent = "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
     banner.classList.add("show");
     document.getElementById("saveImgBtn").style.display = "inline-block";
+    document.getElementById("feedbackLink").classList.add("show");
     saveState();
     if (isNewCompletion && window.goatcounter && window.goatcounter.count) {
       window.goatcounter.count({
