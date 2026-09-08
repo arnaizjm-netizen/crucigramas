@@ -294,6 +294,7 @@
     selR: 0, selC: 0,
     dir: "H",
     checking: false,
+    started: false,
     finished: false,
     elapsedMs: 0,
     finalElapsedMs: null
@@ -320,6 +321,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         grid: state.grid,
         selR: state.selR, selC: state.selC, dir: state.dir,
+        started: state.started,
         finished: state.finished,
         elapsedMs: state.elapsedMs,
         finalElapsedMs: state.finalElapsedMs
@@ -344,6 +346,7 @@
     if (typeof saved.selR === "number") state.selR = saved.selR;
     if (typeof saved.selC === "number") state.selC = saved.selC;
     if (saved.dir === "H" || saved.dir === "V") state.dir = saved.dir;
+    state.started = !!saved.started;
     state.finished = !!saved.finished;
     state.elapsedMs = typeof saved.elapsedMs === "number" ? saved.elapsedMs : 0;
     state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
@@ -795,6 +798,16 @@
           if (letter) {
             var hasAny = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
             if (hasAny) ensureTimerRunning();
+            if (!state.started) {
+              state.started = true;
+              if (window.goatcounter && window.goatcounter.count) {
+                window.goatcounter.count({
+                  path: location.pathname.replace(/\/$/, "") + "-empezado",
+                  title: "Crucigrama empezado",
+                  event: true,
+                });
+              }
+            }
             var next = neighborInSegment(r, c, state.dir, 1);
             if (next) moveTo(next[0], next[1], state.dir);
           }
