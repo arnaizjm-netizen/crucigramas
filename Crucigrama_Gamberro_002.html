@@ -676,12 +676,8 @@
     document.getElementById("saveImgBtn").style.display = "inline-block";
     document.getElementById("feedbackBox").classList.add("show");
     saveState();
-    if (isNewCompletion && window.goatcounter && window.goatcounter.count) {
-      window.goatcounter.count({
-        path: location.pathname.replace(/\/$/, "") + "-completado",
-        title: "Crucigrama completado",
-        event: true,
-      });
+    if (isNewCompletion) {
+      gcEvent("-completado", "Crucigrama completado");
     }
   }
 
@@ -741,6 +737,21 @@
     toastEl.classList.add("show");
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
+  }
+
+  // ---------- eventos de GoatCounter (con reintento por si count.js aun no ha cargado) ----------
+  function gcEvent(suffix, title, triesLeft) {
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({
+        path: location.pathname.replace(/\/$/, "") + suffix,
+        title: title,
+        event: true,
+      });
+      return;
+    }
+    triesLeft = triesLeft === undefined ? 10 : triesLeft;
+    if (triesLeft <= 0) return;
+    setTimeout(function () { gcEvent(suffix, title, triesLeft - 1); }, 200);
   }
 
   // ---------- copiar definicion al portapapeles ----------
@@ -811,13 +822,7 @@
             if (hasAny) ensureTimerRunning();
             if (!state.started) {
               state.started = true;
-              if (window.goatcounter && window.goatcounter.count) {
-                window.goatcounter.count({
-                  path: location.pathname.replace(/\/$/, "") + "-empezado",
-                  title: "Crucigrama empezado",
-                  event: true,
-                });
-              }
+              gcEvent("-empezado", "Crucigrama empezado");
             }
             var next = neighborInSegment(r, c, state.dir, 1);
             if (next) moveTo(next[0], next[1], state.dir);
