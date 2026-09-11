@@ -306,6 +306,7 @@
     dir: "H",
     checking: false,
     started: false,
+    firstWordDone: false,
     finished: false,
     elapsedMs: 0,
     finalElapsedMs: null
@@ -333,6 +334,7 @@
         grid: state.grid,
         selR: state.selR, selC: state.selC, dir: state.dir,
         started: state.started,
+        firstWordDone: state.firstWordDone,
         finished: state.finished,
         elapsedMs: state.elapsedMs,
         finalElapsedMs: state.finalElapsedMs
@@ -358,6 +360,7 @@
     if (typeof saved.selC === "number") state.selC = saved.selC;
     if (saved.dir === "H" || saved.dir === "V") state.dir = saved.dir;
     state.started = !!saved.started;
+    state.firstWordDone = !!saved.firstWordDone;
     state.finished = !!saved.finished;
     state.elapsedMs = typeof saved.elapsedMs === "number" ? saved.elapsedMs : 0;
     state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
@@ -529,6 +532,13 @@
       for (var c = 0; c < N; c++)
         if (!DATA.black[r][c] && state.grid[r][c] !== DATA.solution[r][c]) return false;
     return true;
+  }
+
+  function isSegmentComplete(segId) {
+    if (!segId) return false;
+    return segOf(segId).cells.every(function (rc) {
+      return state.grid[rc[0]][rc[1]] === DATA.solution[rc[0]][rc[1]];
+    });
   }
 
   function clearCheckStyles() {
@@ -823,6 +833,13 @@
             if (!state.started) {
               state.started = true;
               gcEvent("-empezado", "Crucigrama empezado");
+            }
+            if (!state.firstWordDone) {
+              var hSeg = DATA.cellSegH[r][c], vSeg = DATA.cellSegV[r][c];
+              if (isSegmentComplete(hSeg) || isSegmentComplete(vSeg)) {
+                state.firstWordDone = true;
+                gcEvent("-primera_palabra", "Primera palabra resuelta");
+              }
             }
             var next = neighborInSegment(r, c, state.dir, 1);
             if (next) moveTo(next[0], next[1], state.dir);
