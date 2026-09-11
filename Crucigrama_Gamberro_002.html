@@ -22,6 +22,7 @@
     --grid-outer: #1f2320;
     --wrong: #b3372c;
     --empty-hint: #e8b23b;
+    --attention-bg: #fde3c0;
     --win: #2f8f3f;
   }
   * { box-sizing: border-box; }
@@ -156,8 +157,8 @@
   .cell-white.sel-row { background: var(--select-row); }
   .cell-white.sel-word { background: var(--select-word); }
   .cell-white.sel-active { background: #fff29a; }
+  .cell-white.cell-wrong, .cell-white.cell-empty { background: var(--attention-bg); }
   .cell-white.cell-wrong input { color: var(--wrong); }
-  .cell-white.cell-empty { box-shadow: inset 0 0 0 2px var(--empty-hint); }
   .cell-white.cell-correct input { color: var(--text); }
   .cell-white.cell-win { background: #e9f7ec; }
   .cell-white.cell-win input { color: var(--win); }
