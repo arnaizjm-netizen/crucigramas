@@ -614,6 +614,12 @@
     state.finalElapsedMs = null;
     exitCheckMode();
     clearCheckStyles();
+    for (var r2 = 0; r2 < N; r2++) {
+      for (var c2 = 0; c2 < N; c2++) {
+        var d2 = cellDivOf(r2, c2);
+        if (d2) d2.classList.remove("cell-win");
+      }
+    }
     document.getElementById("saveImgBtn").style.display = "none";
     document.getElementById("winBanner").classList.remove("show");
     document.getElementById("feedbackBox").classList.remove("show");
