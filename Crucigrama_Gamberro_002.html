@@ -225,6 +225,7 @@
     border-radius: 8px;
     padding: 10px 20px;
   }
+  .feedback-link-inline { margin: 6px 0 0 4px; }
   .toast {
     position: fixed;
     bottom: 20px;
@@ -482,14 +483,13 @@
       currentDefSeg = null;
       labelEl.textContent = "¡Completado!";
       textEl.textContent = "";
-      textEl.appendChild(document.createTextNode("Espero que te haya gustado. "));
+      textEl.appendChild(document.createTextNode("¿Te ha gustado? "));
       var link = document.createElement("a");
       link.href = "https://forms.gle/uaAjqZdS5TLsL7Yt9";
       link.target = "_blank";
       link.rel = "noopener";
-      link.className = "feedback-link";
+      link.className = "feedback-link feedback-link-inline";
       link.textContent = "Quiero recibir otro";
-      textEl.appendChild(document.createElement("br"));
       textEl.appendChild(link);
       return;
     }
