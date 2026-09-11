@@ -476,9 +476,24 @@
   var currentDefSeg = null;
 
   function updateDefs() {
-    var segId = segIdFor(state.selR, state.selC, state.dir);
     var labelEl = document.getElementById("defsLabel");
     var textEl = document.getElementById("defsText");
+    if (state.finished) {
+      currentDefSeg = null;
+      labelEl.textContent = "¡Completado!";
+      textEl.textContent = "";
+      textEl.appendChild(document.createTextNode("Espero que te haya gustado. "));
+      var link = document.createElement("a");
+      link.href = "https://forms.gle/uaAjqZdS5TLsL7Yt9";
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.className = "feedback-link";
+      link.textContent = "Quiero recibir otro";
+      textEl.appendChild(document.createElement("br"));
+      textEl.appendChild(link);
+      return;
+    }
+    var segId = segIdFor(state.selR, state.selC, state.dir);
     if (!segId) {
       currentDefSeg = null;
       labelEl.textContent = "Definicion";
@@ -677,6 +692,7 @@
     state.finalElapsedMs = state.elapsedMs;
     renderTimer(state.finalElapsedMs);
     clearCheckStyles();
+    updateDefs();
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
         var d = cellDivOf(r, c);
