@@ -326,6 +326,7 @@
     checking: false,
     started: false,
     firstWordDone: false,
+    wordsDone: {},      // segId -> true, palabras ya contadas para GoatCounter
     finished: false,
     elapsedMs: 0,
     finalElapsedMs: null
@@ -354,6 +355,7 @@
         selR: state.selR, selC: state.selC, dir: state.dir,
         started: state.started,
         firstWordDone: state.firstWordDone,
+        wordsDone: state.wordsDone,
         finished: state.finished,
         elapsedMs: state.elapsedMs,
         finalElapsedMs: state.finalElapsedMs
@@ -380,6 +382,7 @@
     if (saved.dir === "H" || saved.dir === "V") state.dir = saved.dir;
     state.started = !!saved.started;
     state.firstWordDone = !!saved.firstWordDone;
+    state.wordsDone = (saved.wordsDone && typeof saved.wordsDone === "object") ? saved.wordsDone : {};
     state.finished = !!saved.finished;
     state.elapsedMs = typeof saved.elapsedMs === "number" ? saved.elapsedMs : 0;
     state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
@@ -492,12 +495,14 @@
   }
 
   var currentDefSeg = null;
+  var currentDefSegId = null;
 
   function updateDefs() {
     var labelEl = document.getElementById("defsLabel");
     var textEl = document.getElementById("defsText");
     if (state.finished) {
       currentDefSeg = null;
+      currentDefSegId = null;
       labelEl.textContent = "¡Completado!";
       textEl.textContent = "";
       textEl.appendChild(document.createTextNode("¿Te ha gustado? "));
@@ -513,12 +518,14 @@
     var segId = segIdFor(state.selR, state.selC, state.dir);
     if (!segId) {
       currentDefSeg = null;
+      currentDefSegId = null;
       labelEl.textContent = "Definicion";
       textEl.textContent = "Toca una casilla para empezar.";
       return;
     }
     var seg = segOf(segId);
     currentDefSeg = seg;
+    currentDefSegId = segId;
     labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
     textEl.textContent = seg.clue;
   }
@@ -807,6 +814,7 @@
   // ---------- copiar definicion al portapapeles ----------
   document.querySelector(".defs-panel").addEventListener("click", function () {
     if (!currentDefSeg) return;
+    gcEvent("-ayuda-" + currentDefSegId, "Ayuda IA " + currentDefSegId);
     var preamble = "Voy a darte una definición de un crucigrama. Échame una mano sin revelarme la solución.";
     var text = preamble + "\n\n" + currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
@@ -874,13 +882,18 @@
               state.started = true;
               gcEvent("-empezado", "Crucigrama empezado");
             }
-            if (!state.firstWordDone) {
+            (function () {
               var hSeg = DATA.cellSegH[r][c], vSeg = DATA.cellSegV[r][c];
-              if (isSegmentComplete(hSeg) || isSegmentComplete(vSeg)) {
-                state.firstWordDone = true;
-                gcEvent("-primera_palabra", "Primera palabra resuelta");
-              }
-            }
+              [hSeg, vSeg].forEach(function (segId) {
+                if (!segId || state.wordsDone[segId] || !isSegmentComplete(segId)) return;
+                state.wordsDone[segId] = true;
+                if (!state.firstWordDone) {
+                  state.firstWordDone = true;
+                  gcEvent("-primera_palabra", "Primera palabra resuelta");
+                }
+                gcEvent("-palabra-" + segId, "Palabra resuelta " + segId);
+              });
+            })();
             var next = neighborInSegment(r, c, state.dir, 1);
             if (next) moveTo(next[0], next[1], state.dir);
           }
