@@ -708,6 +708,38 @@
   });
   window.addEventListener("pagehide", function () { pauseTimer(); saveState(); });
 
+  // ---------- foto de la cuadricula al abandonar ----------
+  var abandonReported = false;
+  function buildGridSnapshot() {
+    // solo casillas jugables (blancas): el patron de negras ya es un dato
+    // publico del propio crucigrama, no hace falta repetirlo aqui -- y asi
+    // nos mantenemos bajo el limite de 200 caracteres del campo "title" de
+    // GoatCounter incluso en cuadriculas grandes (15x15 = 225 casillas).
+    var out = "";
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        out += state.grid[r][c] || "_";
+      }
+    }
+    return out;
+  }
+  function reportAbandon() {
+    if (abandonReported || state.finished || !state.started) return;
+    abandonReported = true;
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({
+        path: location.pathname.replace(/\/$/, "") + "-abandona",
+        title: buildGridSnapshot(),
+        event: true,
+      });
+    }
+  }
+  window.addEventListener("pagehide", reportAbandon);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") reportAbandon();
+  });
+
   // ---------- victoria ----------
   function finishGame() {
     var isNewCompletion = !state.finished;
