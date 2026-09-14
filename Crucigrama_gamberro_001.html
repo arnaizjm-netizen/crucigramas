@@ -709,7 +709,14 @@
   window.addEventListener("pagehide", function () { pauseTimer(); saveState(); });
 
   // ---------- foto de la cuadricula al abandonar ----------
-  var abandonReported = false;
+  // ojo: no nos quedamos bloqueados tras el primer envio -- en movil es
+  // habitual perder el foco un instante (cambiar de app, mirar una
+  // notificacion) y volver enseguida; si bloqueasemos aqui para siempre,
+  // ese primer vistazo perdido -- casi siempre justo tras la primera
+  // palabra -- se quedaria fijado como "abandono" aunque la persona
+  // siguiera jugando despues. Por eso reenviamos cada vez que la
+  // cuadricula cambia desde el ultimo envio.
+  var lastAbandonSnapshot = null;
   function buildGridSnapshot() {
     // solo casillas jugables (blancas): el patron de negras ya es un dato
     // publico del propio crucigrama, no hace falta repetirlo aqui -- y asi
@@ -725,12 +732,14 @@
     return out;
   }
   function reportAbandon() {
-    if (abandonReported || state.finished || !state.started) return;
-    abandonReported = true;
+    if (state.finished || !state.started) return;
+    var snap = buildGridSnapshot();
+    if (snap === lastAbandonSnapshot) return;
+    lastAbandonSnapshot = snap;
     if (window.goatcounter && window.goatcounter.count) {
       window.goatcounter.count({
         path: location.pathname.replace(/\/$/, "") + "-abandona",
-        title: buildGridSnapshot(),
+        title: snap,
         event: true,
       });
     }
