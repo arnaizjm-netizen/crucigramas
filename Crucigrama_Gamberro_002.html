@@ -716,12 +716,17 @@
   // palabra -- se quedaria fijado como "abandono" aunque la persona
   // siguiera jugando despues. Por eso reenviamos cada vez que la
   // cuadricula cambia desde el ultimo envio.
+  //
+  // la foto va codificada en el PATH, no en el titulo: GoatCounter guarda
+  // el titulo una vez por path (compartido entre todos los hits a esa
+  // misma ruta), no uno distinto por cada golpe -- si lo pusieramos en el
+  // titulo, todos los abandonos de un mismo crucigrama se verian siempre
+  // con el titulo del primero que se registro, por mucho que cada uno
+  // mandara un valor distinto. El path si se guarda integro por cada hit.
   var lastAbandonSnapshot = null;
   function buildGridSnapshot() {
     // solo casillas jugables (blancas): el patron de negras ya es un dato
-    // publico del propio crucigrama, no hace falta repetirlo aqui -- y asi
-    // nos mantenemos bajo el limite de 200 caracteres del campo "title" de
-    // GoatCounter incluso en cuadriculas grandes (15x15 = 225 casillas).
+    // publico del propio crucigrama, no hace falta repetirlo aqui.
     var out = "";
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
@@ -737,9 +742,13 @@
     if (snap === lastAbandonSnapshot) return;
     lastAbandonSnapshot = snap;
     if (window.goatcounter && window.goatcounter.count) {
+      var base = location.pathname.replace(/\/$/, "");
+      // evento simple, para ver de un vistazo el recuento total en el panel
+      window.goatcounter.count({ path: base + "-abandona", event: true });
+      // evento con la foto de la cuadricula codificada en el path
       window.goatcounter.count({
-        path: location.pathname.replace(/\/$/, "") + "-abandona",
-        title: snap,
+        path: base + "-abandona-datos-" + snap,
+        title: "Foto de cuadricula al abandonar",
         event: true,
       });
     }
