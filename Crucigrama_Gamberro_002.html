@@ -92,7 +92,7 @@
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
   .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-  button {
+  button, .btn-link {
     font: inherit;
     font-weight: 600;
     border: none;
@@ -103,12 +103,14 @@
     color: var(--text);
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
   }
-  button:active { transform: translateY(1px); }
+  .btn-link { display: inline-block; text-decoration: none; }
+  button:active, .btn-link:active { transform: translateY(1px); }
   #checkBtn.is-checking {
     background: var(--danger);
     color: #fff;
   }
   #resetBtn { color: var(--muted); }
+  #opinionLink { color: var(--muted); }
   #saveImgBtn {
     background: var(--win);
     color: #fff;
@@ -290,6 +292,7 @@
       <button id="checkBtn" type="button">Comprobar</button>
       <button id="resetBtn" type="button">Reiniciar</button>
       <button id="saveImgBtn" type="button">Guardar imagen</button>
+      <a id="opinionLink" class="btn-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Opinión</a>
     </div>
   </div>
 
@@ -658,6 +661,10 @@
     enterCheckMode();
   }
   checkBtn.addEventListener("click", toggleCheck);
+
+  document.getElementById("opinionLink").addEventListener("click", function () {
+    gcEvent("-opinion", "Opinión");
+  });
 
   // ---------- reinicio ----------
   document.getElementById("resetBtn").addEventListener("click", function () {
