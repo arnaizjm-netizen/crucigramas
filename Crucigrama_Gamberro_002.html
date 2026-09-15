@@ -199,6 +199,12 @@
     font-size: 1.05rem;
     line-height: 1.35;
   }
+  .ayuda-reminder {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
   .win-banner {
     width: 100%;
     max-width: 640px;
@@ -497,6 +503,11 @@
   var currentDefSeg = null;
   var currentDefSegId = null;
 
+  // ---------- recordatorio contextual de ayuda IA ----------
+  // variables sueltas, no persistidas -- se reinician a mano en "Reiniciar"
+  var defsShownCount = 0;
+  var ayudaUsadaEstaPartida = false;
+
   function updateDefs() {
     var labelEl = document.getElementById("defsLabel");
     var textEl = document.getElementById("defsText");
@@ -528,6 +539,15 @@
     currentDefSegId = segId;
     labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
     textEl.textContent = seg.clue;
+
+    defsShownCount++;
+    var elegible = Object.keys(state.wordsDone).length >= 6;
+    if (elegible && !ayudaUsadaEstaPartida && defsShownCount % 5 === 0) {
+      var reminder = document.createElement("span");
+      reminder.className = "ayuda-reminder";
+      reminder.textContent = "¿Necesitas una ayudita? Pídesela a la IA.";
+      textEl.appendChild(reminder);
+    }
   }
 
   function selectCell(r, c, preferredDir, force) {
@@ -651,6 +671,8 @@
     state.finished = false;
     state.elapsedMs = 0;
     state.finalElapsedMs = null;
+    defsShownCount = 0;
+    ayudaUsadaEstaPartida = false;
     exitCheckMode();
     clearCheckStyles();
     for (var r2 = 0; r2 < N; r2++) {
@@ -864,6 +886,7 @@
   // ---------- copiar definicion al portapapeles ----------
   document.querySelector(".defs-panel").addEventListener("click", function () {
     if (!currentDefSeg) return;
+    ayudaUsadaEstaPartida = true;
     gcEvent("-ayuda-" + currentDefSegId, "Ayuda IA " + currentDefSegId);
     var preamble = "Voy a darte una definición de un crucigrama. Échame una mano sin revelarme la solución.";
     var text = preamble + "\n\n" + currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
