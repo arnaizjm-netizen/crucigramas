@@ -234,6 +234,15 @@
   }
   .feedback-box.show { display: block; }
   .feedback-box p { margin: 0 0 10px; }
+  .site-footer {
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+    margin: 18px 0 8px;
+    font-size: 0.85rem;
+  }
+  .site-footer a { color: var(--muted); text-decoration: none; }
+  .site-footer a:hover { text-decoration: underline; }
   .feedback-link {
     display: inline-block;
     background: var(--accent);
@@ -260,6 +269,42 @@
     z-index: 50;
   }
   .toast.show { opacity: 0.95; }
+  .siguiente-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%) translateY(12px);
+    width: calc(100% - 32px);
+    max-width: 420px;
+    background: var(--panel-bg);
+    color: var(--text);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    padding: 14px 16px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .siguiente-toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+  .siguiente-toast p { margin: 0 26px 10px 0; font-size: 0.92rem; }
+  .siguiente-toast a { color: var(--accent-dark); }
+  .siguiente-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+  }
 
   @media (prefers-color-scheme: dark) {
     :root {
@@ -311,7 +356,18 @@
     <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero recibir otro</a>
   </div>
 
+  <div class="site-footer"><a href="https://recreo.zone/">RECREO.ZONE</a></div>
+
   <div class="toast" id="toastEl"></div>
+
+  <div class="siguiente-toast" id="siguienteToast">
+    <button class="siguiente-close" id="siguienteClose" type="button" aria-label="Cerrar">×</button>
+    <p>¿Te está gustando? Si quieres que te avise cuando haya otro, escríbeme a
+      <a href="mailto:crucigramas@recreo.zone">crucigramas@recreo.zone</a></p>
+    <a class="feedback-link" id="siguienteBtn"
+       href="mailto:crucigramas@recreo.zone?subject=Quiero%20el%20siguiente&body=Av%C3%ADsame%20cuando%20salga%20el%20pr%C3%B3ximo%20Crucigrama%20Gamberro."
+       target="_blank" rel="noopener">QUIERO EL SIGUIENTE</a>
+  </div>
 
 <script>
 (function () {
@@ -510,6 +566,7 @@
   // variables sueltas, no persistidas -- se reinician a mano en "Reiniciar"
   var defsShownCount = 0;
   var ayudaUsadaEstaPartida = false;
+  var recordatorioIaMostrado = false;
 
   function updateDefs() {
     var labelEl = document.getElementById("defsLabel");
@@ -546,6 +603,10 @@
     defsShownCount++;
     var elegible = Object.keys(state.wordsDone).length >= 6;
     if (elegible && !ayudaUsadaEstaPartida && defsShownCount % 5 === 0) {
+      if (!recordatorioIaMostrado) {
+        recordatorioIaMostrado = true;
+        gcEvent("-recordatorio-ia", "Recordatorio IA");
+      }
       var reminder = document.createElement("span");
       reminder.className = "ayuda-reminder";
       reminder.textContent = "¿Necesitas una ayudita? Pídesela a la IA.";
@@ -680,6 +741,9 @@
     state.finalElapsedMs = null;
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
+    recordatorioIaMostrado = false;
+    siguienteMostrado = false;
+    siguienteToastEl.classList.remove("show");
     exitCheckMode();
     clearCheckStyles();
     for (var r2 = 0; r2 < N; r2++) {
@@ -875,6 +939,34 @@
     toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
   }
 
+  // ---------- aviso "quiero el siguiente" (35% de casillas rellenadas) ----------
+  // variable suelta, no persistida -- se reinicia en "Reiniciar"
+  var siguienteMostrado = false;
+  var siguienteToastEl = document.getElementById("siguienteToast");
+
+  function checkSiguienteAviso() {
+    if (siguienteMostrado || state.finished) return;
+    var total = 0, rellenas = 0;
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        total++;
+        if (state.grid[r][c]) rellenas++;
+      }
+    }
+    if (total === 0 || rellenas / total < 0.35) return;
+    siguienteMostrado = true;
+    gcEvent("-aviso-siguiente", "Aviso siguiente");
+    siguienteToastEl.classList.add("show");
+  }
+
+  document.getElementById("siguienteClose").addEventListener("click", function () {
+    siguienteToastEl.classList.remove("show");
+  });
+  document.getElementById("siguienteBtn").addEventListener("click", function () {
+    gcEvent("-quiero-siguiente", "Quiero el siguiente");
+  });
+
   // ---------- eventos de GoatCounter (con reintento por si count.js aun no ha cargado) ----------
   function gcEvent(suffix, title, triesLeft) {
     if (window.goatcounter && window.goatcounter.count) {
@@ -979,6 +1071,7 @@
           }
 
           saveState();
+          checkSiguienteAviso();
 
           if (isGridFull() && isGridAllCorrect()) {
             finishGame();
