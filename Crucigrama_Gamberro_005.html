@@ -953,7 +953,9 @@
     document.getElementById("feedbackBox").classList.add("show");
     saveState();
     if (isNewCompletion) {
-      gcEventPartida("-completado", "Crucigrama completado");
+      // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
+      // GoatCounter guarda un unico titulo por path, asi que en el titulo no serviria
+      gcEventPartida("-completado-" + Math.floor(state.finalElapsedMs / 1000), "Crucigrama completado");
     }
   }
 
