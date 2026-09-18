@@ -292,7 +292,7 @@
     transform: translateX(-50%) translateY(0);
   }
   .siguiente-toast p { margin: 0 26px 10px 0; font-size: 0.92rem; }
-  .siguiente-toast a { color: var(--accent-dark); }
+  .siguiente-toast p a { color: var(--accent-dark); }
   .siguiente-close {
     position: absolute;
     top: 6px;
@@ -322,6 +322,7 @@
     .cell-white { background: #fdfdfb; }
     .cell-white input { color: #111; }
     .win-banner { background: #163420; color: #bdeecb; }
+    .siguiente-toast p a { color: #7fd19f; }
     .ia-note { background: #163420; color: #ffa94d; }
   }
 </style>
@@ -377,6 +378,25 @@
   var N = DATA.size;
   var STORAGE_KEY = "crossword_state_" + DATA.id;
 
+  // ---------- identificador de partida (ver "IDENTIFICACION DE PARTIDAS Y MEDICION DE REANUDACIONES") ----------
+  var ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  var CRUCIGRAMA_NUM = parseInt((DATA.name.match(/(\d+)\s*$/) || [0, "1"])[1], 10);
+
+  function crucigramaCodigo(numero) {
+    var n = numero - 1;
+    return ID_ALPHABET[Math.floor(n / 64)] + ID_ALPHABET[n % 64];
+  }
+
+  function randomPartidaCodigo() {
+    var bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    var out = "";
+    for (var i = 0; i < 6; i++) out += ID_ALPHABET[bytes[i] % 64];
+    return out;
+  }
+
+  var GAME_PREFIX = crucigramaCodigo(CRUCIGRAMA_NUM);
+
   (function showSavedUrl() {
     var canonical = document.querySelector('link[rel="canonical"]');
     var urlEl = document.getElementById("saveNoteUrl");
@@ -394,7 +414,8 @@
     wordsDone: {},      // segId -> true, palabras ya contadas para GoatCounter
     finished: false,
     elapsedMs: 0,
-    finalElapsedMs: null
+    finalElapsedMs: null,
+    gameId: null         // identificador de partida (8 car.), ver documento de reanudaciones
   };
 
   for (var r = 0; r < N; r++) {
@@ -423,7 +444,8 @@
         wordsDone: state.wordsDone,
         finished: state.finished,
         elapsedMs: state.elapsedMs,
-        finalElapsedMs: state.finalElapsedMs
+        finalElapsedMs: state.finalElapsedMs,
+        gameId: state.gameId
       }));
     } catch (e) { /* almacenamiento no disponible: se ignora */ }
   }
@@ -451,9 +473,22 @@
     state.finished = !!saved.finished;
     state.elapsedMs = typeof saved.elapsedMs === "number" ? saved.elapsedMs : 0;
     state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
+    state.gameId = (typeof saved.gameId === "string" && saved.gameId.length === 8) ? saved.gameId : null;
   }
 
   loadState();
+
+  // si ya habia una partida guardada y sin terminar, es una reanudacion;
+  // si no, se genera el identificador de la partida nueva (no hace falta
+  // guardarlo ya mismo: se persiste solo cuando saveState() se llame por
+  // una interaccion real, igual que el resto del estado)
+  if (state.gameId) {
+    if (state.started && !state.finished) {
+      gcEventPartida("-reanudado", "Partida reanudada");
+    }
+  } else {
+    state.gameId = GAME_PREFIX + randomPartidaCodigo();
+  }
 
   // ---------- construccion del tablero ----------
   var gridEl = document.getElementById("gridEl");
@@ -739,6 +774,7 @@
     state.finished = false;
     state.elapsedMs = 0;
     state.finalElapsedMs = null;
+    state.gameId = GAME_PREFIX + randomPartidaCodigo();
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
     recordatorioIaMostrado = false;
@@ -835,7 +871,7 @@
     if (snap === lastAbandonSnapshot) return;
     lastAbandonSnapshot = snap;
     if (window.goatcounter && window.goatcounter.count) {
-      var base = location.pathname.replace(/\/$/, "");
+      var base = location.pathname.replace(/\/$/, "") + (state.gameId ? "-" + state.gameId : "");
       // evento simple, para ver de un vistazo el recuento total en el panel
       window.goatcounter.count({ path: base + "-abandona", event: true });
       // evento con la foto de la cuadricula codificada en el path
@@ -877,7 +913,7 @@
     document.getElementById("feedbackBox").classList.add("show");
     saveState();
     if (isNewCompletion) {
-      gcEvent("-completado", "Crucigrama completado");
+      gcEventPartida("-completado", "Crucigrama completado");
     }
   }
 
@@ -982,6 +1018,12 @@
     setTimeout(function () { gcEvent(suffix, title, triesLeft - 1); }, 200);
   }
 
+  // variante que antepone el identificador de partida, para los eventos
+  // del ciclo de la partida que se quieren poder correlacionar entre visitas
+  function gcEventPartida(suffix, title, triesLeft) {
+    gcEvent("-" + state.gameId + suffix, title, triesLeft);
+  }
+
   // ---------- copiar definicion al portapapeles ----------
   document.querySelector(".defs-panel").addEventListener("click", function () {
     if (!currentDefSeg) return;
@@ -1052,7 +1094,7 @@
             if (hasAny) ensureTimerRunning();
             if (!state.started) {
               state.started = true;
-              gcEvent("-empezado", "Crucigrama empezado");
+              gcEventPartida("-empezado", "Crucigrama empezado");
             }
             (function () {
               var hSeg = DATA.cellSegH[r][c], vSeg = DATA.cellSegV[r][c];
@@ -1061,9 +1103,9 @@
                 state.wordsDone[segId] = true;
                 if (!state.firstWordDone) {
                   state.firstWordDone = true;
-                  gcEvent("-primera_palabra", "Primera palabra resuelta");
+                  gcEventPartida("-primera_palabra", "Primera palabra resuelta");
                 }
-                gcEvent("-palabra-" + segId, "Palabra resuelta " + segId);
+                gcEventPartida("-palabra-" + segId, "Palabra resuelta " + segId);
               });
             })();
             var next = neighborInSegment(r, c, state.dir, 1);
