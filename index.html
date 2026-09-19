@@ -164,7 +164,7 @@
       <p class="crossword-number">Nº 006</p>
       <img class="current-grid" src="miniaturas/miniatura_006.png" alt="Cuadrícula vacía del Crucigrama Gamberro 006">
       <div>
-        <a class="play-btn" href="CRUCIGRAMA_GAMBERRO_006.html">JUGAR</a>
+        <a class="play-btn" id="playBtn" href="CRUCIGRAMA_GAMBERRO_006.html?ref=home">JUGAR</a>
       </div>
     </section>
 
@@ -190,8 +190,8 @@
     <section class="next-signup">
       <h2>¿Quieres el siguiente?</h2>
       <p>Si quieres que te avise cuando publique otro Crucigrama Gamberro, escríbeme a
-        <a href="mailto:crucigramas@recreo.zone">crucigramas@recreo.zone</a></p>
-      <a class="next-btn"
+        <a id="emailLink" href="mailto:crucigramas@recreo.zone">crucigramas@recreo.zone</a></p>
+      <a class="next-btn" id="nextBtn"
          href="mailto:crucigramas@recreo.zone?subject=Quiero%20el%20siguiente&body=Av%C3%ADsame%20cuando%20salga%20el%20pr%C3%B3ximo%20Crucigrama%20Gamberro.">QUIERO EL SIGUIENTE</a>
     </section>
   </main>
@@ -200,6 +200,45 @@
     <p><a href="mailto:crucigramas@recreo.zone">Contacto</a> · <a href="/privacidad.html">Privacidad</a></p>
     <p>RECREO.ZONE es un proyecto personal y no comercial.</p>
   </footer>
+
+<script>
+(function () {
+  // Eventos de la portada en el mismo GoatCounter que los crucigramas: la
+  // Session de GoatCounter une la visita a la portada con la partida.
+  function gcReady() { return !!(window.goatcounter && window.goatcounter.count); }
+  function gcSend(path, title) {
+    window.goatcounter.count({ path: path, title: title, event: true });
+  }
+  // Si count.js aun no ha cargado, se espera un poco antes de ejecutar la
+  // accion (solo para JUGAR, que abandona la pagina), para no perder el evento.
+  function gcSendThen(path, title, done) {
+    var tries = 0;
+    (function attempt() {
+      if (gcReady()) { gcSend(path, title); done(); return; }
+      if (++tries > 10) { done(); return; }
+      setTimeout(attempt, 100);
+    })();
+  }
+
+  var playBtn = document.getElementById("playBtn");
+  playBtn.addEventListener("click", function (e) {
+    var path = "/home-jugar-006";
+    var title = "Portada: JUGAR 006";
+    if (gcReady()) { gcSend(path, title); return; }
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    gcSendThen(path, title, function () { location.href = playBtn.href; });
+  });
+
+  function noop() {}
+  document.getElementById("nextBtn").addEventListener("click", function () {
+    gcSendThen("/home-quiero-siguiente", "Portada: QUIERO EL SIGUIENTE", noop);
+  });
+  document.getElementById("emailLink").addEventListener("click", function () {
+    gcSendThen("/home-email", "Portada: correo", noop);
+  });
+})();
+</script>
 
 </body>
 </html>
