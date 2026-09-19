@@ -240,6 +240,28 @@
   }
   .feedback-box.show { display: block; }
   .feedback-box p { margin: 0 0 10px; }
+  .hof-box {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .hof-box.show { display: block; }
+  .hof-box h2 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: 0.08em; }
+  .hof-box p { margin: 0 0 12px; font-size: 0.92rem; color: var(--muted); }
+  .hof-box .hof-enter {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 10px 26px;
+  }
   .site-footer {
     width: 100%;
     max-width: 640px;
@@ -359,6 +381,11 @@
   </div>
 
   <div class="win-banner" id="winBanner"></div>
+  <div class="hof-box" id="hofBox">
+    <h2>HALL OF FAME</h2>
+    <p>Solo quienes han resuelto un crucigrama llegan hasta aquí.</p>
+    <button type="button" class="hof-enter" id="hofEnter">ENTRAR</button>
+  </div>
   <div class="feedback-box" id="feedbackBox">
     <p>Espero que te haya gustado. Si quieres recibir otro como este, pulsa aquí.</p>
     <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero recibir otro</a>
@@ -791,6 +818,7 @@
     recordatorioIaMostrado = false;
     siguienteMostrado = false;
     hideSiguiente();
+    hofRefresh();
     exitCheckMode();
     clearCheckStyles();
     for (var r2 = 0; r2 < N; r2++) {
@@ -924,6 +952,49 @@
     if (document.visibilityState === "hidden") reportAbandon();
   });
 
+  // ---------- Hall of Fame: acceso desde la partida completada ----------
+  // Interruptor general. Solo true si el formulario real de Google esta
+  // conectado en hall-of-fame.html (lo esta desde el lanzamiento). Solo
+  // crucigramas 002 en adelante.
+  var HOF_LIVE = true;
+  var HOF_ENABLED = HOF_LIVE && CRUCIGRAMA_NUM >= 2;
+  var hofBox = document.getElementById("hofBox");
+
+  function hofCrosswordId() {
+    var s = "" + CRUCIGRAMA_NUM;
+    while (s.length < 3) s = "0" + s;
+    return s;
+  }
+
+  function hofIsPublished(gameId) {
+    try { return localStorage.getItem("hof_pub_" + gameId) === "1"; } catch (e) { return false; }
+  }
+
+  // el derecho a mostrar ENTRAR sale de la partida completada guardada, no de sessionStorage
+  function hofRefresh() {
+    var show = HOF_ENABLED && state.finished && !!state.gameId && !hofIsPublished(state.gameId);
+    hofBox.classList.toggle("show", show);
+  }
+
+  document.getElementById("hofEnter").addEventListener("click", function () {
+    var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
+    var claim = {
+      crossword_id: hofCrosswordId(),
+      archivo: location.pathname.split("/").pop(),
+      game_id: state.gameId,
+      tiempo_s: Math.floor(ms / 1000)
+    };
+    try { sessionStorage.setItem("hof_claim", JSON.stringify(claim)); } catch (e) { /* sin sessionStorage: solo vista publica */ }
+    var go = function () { location.href = "/hall-of-fame.html?crossword=" + claim.crossword_id; };
+    // el evento tiene que salir antes de abandonar la pagina
+    var tries = 0;
+    (function attempt() {
+      if (window.goatcounter && window.goatcounter.count) { gcEventPartida("-hof-entrada", "Hall of Fame: entrada"); go(); return; }
+      if (++tries > 10) { go(); return; }
+      setTimeout(attempt, 100);
+    })();
+  });
+
   // ---------- victoria ----------
   function finishGame() {
     var isNewCompletion = !state.finished;
@@ -952,6 +1023,7 @@
     document.getElementById("saveImgBtn").style.display = "inline-block";
     document.getElementById("feedbackBox").classList.add("show");
     saveState();
+    hofRefresh();
     if (isNewCompletion) {
       // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
       // GoatCounter guarda un unico titulo por path, asi que en el titulo no serviria
