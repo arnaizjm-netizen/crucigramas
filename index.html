@@ -110,6 +110,21 @@
     font-size: 0.8rem;
     color: var(--muted);
   }
+  .hof-link { text-align: center; }
+  .hof-link a {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-decoration: none;
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 12px;
+  }
+  .hof-link a:hover .hof-title, .hof-link a:focus-visible .hof-title { text-decoration: underline; }
+  .hof-link img { display: block; height: auto; }
+  .hof-title { font-weight: 800; font-size: 1.05rem; letter-spacing: 0.04em; margin-top: 4px; }
+  .hof-sub { color: var(--muted); font-size: 0.85rem; }
   .next-signup {
     text-align: center;
     background: var(--panel-bg);
@@ -187,6 +202,18 @@
       </div>
     </section>
 
+    <section class="hof-link">
+      <a id="hofLink" href="hall-of-fame.html">
+        <picture>
+          <source type="image/webp" srcset="iconos/hall-of-fame-240.webp">
+          <img src="iconos/hall-of-fame-240.png" width="96" height="96" loading="lazy"
+               alt="Trofeo con una cuadrícula de crucigrama, corona y laureles">
+        </picture>
+        <span class="hof-title">Hall of Fame</span>
+        <span class="hof-sub">Los mejores tiempos de cada crucigrama</span>
+      </a>
+    </section>
+
     <section class="next-signup">
       <h2>¿Quieres el siguiente?</h2>
       <p>Si quieres que te avise cuando publique otro Crucigrama Gamberro, escríbeme a
@@ -220,15 +247,17 @@
     })();
   }
 
-  var playBtn = document.getElementById("playBtn");
-  playBtn.addEventListener("click", function (e) {
-    var path = "/home-jugar-006";
-    var title = "Portada: JUGAR 006";
-    if (gcReady()) { gcSend(path, title); return; }
-    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    gcSendThen(path, title, function () { location.href = playBtn.href; });
-  });
+  // enlaces que abandonan la pagina: el evento tiene que salir antes de navegar
+  function trackLink(el, path, title) {
+    el.addEventListener("click", function (e) {
+      if (gcReady()) { gcSend(path, title); return; }
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      gcSendThen(path, title, function () { location.href = el.href; });
+    });
+  }
+  trackLink(document.getElementById("playBtn"), "/home-jugar-006", "Portada: JUGAR 006");
+  trackLink(document.getElementById("hofLink"), "/home-hall-of-fame", "Portada: Hall of Fame");
 
   function noop() {}
   document.getElementById("nextBtn").addEventListener("click", function () {

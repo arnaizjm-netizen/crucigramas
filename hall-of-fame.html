@@ -37,9 +37,20 @@
     margin: 14px auto 0; padding: 8px 12px; max-width: 460px;
     background: #fde3c0; color: #5a3a00; border-radius: 8px; font-size: 0.85rem;
   }
-  nav.others { margin: 14px 0 0; font-size: 0.88rem; color: var(--muted); }
-  nav.others a { color: var(--link); margin: 0 4px; text-decoration: none; }
-  nav.others a.current { font-weight: 800; text-decoration: underline; }
+  .hof-icon { display: block; margin: 10px auto 0; height: auto; }
+  p.all { margin: 12px 0 0; font-size: 0.9rem; }
+  p.all a { color: var(--link); text-decoration: none; }
+  p.all a:hover { text-decoration: underline; }
+
+  .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin: 6px 0 12px; }
+  .card {
+    display: flex; flex-direction: column; align-items: center; gap: 4px; width: 150px;
+    text-decoration: none; color: var(--text);
+  }
+  .card img { width: 150px; height: 150px; border-radius: 4px; background: #fdfdfb; box-shadow: 0 1px 3px rgba(0,0,0,0.18); }
+  .card:hover img, .card:focus-visible img { box-shadow: 0 0 0 3px var(--accent); }
+  .card .num { font-weight: 800; letter-spacing: 0.04em; }
+  .card .cnt { color: var(--muted); font-size: 0.85rem; }
 
   section.box {
     background: var(--panel-bg); border-radius: 10px; padding: 18px 16px;
@@ -94,11 +105,21 @@
 <main>
   <header>
     <a class="brand" href="/">RECREO.ZONE</a>
+    <picture>
+      <source type="image/webp" srcset="iconos/hall-of-fame-240.webp">
+      <img class="hof-icon" src="iconos/hall-of-fame-240.png" width="84" height="84"
+           alt="Trofeo con una cuadrícula de crucigrama, corona y laureles">
+    </picture>
     <h1>HALL OF FAME</h1>
     <p class="sub" id="hofSub"></p>
     <div class="sim" id="simBanner" hidden>Modo simulado: los resultados se guardan solo en este navegador.</div>
-    <nav class="others" id="others"></nav>
+    <p class="all" id="allLink" hidden><a href="hall-of-fame.html">← Todos los Hall of Fame</a></p>
   </header>
+
+  <section class="gallery" id="galleryBox" hidden>
+    <div class="cards" id="cards"></div>
+    <p class="status" id="galleryMsg">Cargando…</p>
+  </section>
 
   <section class="box" id="publishBox" hidden>
     <div id="stageHonor">
@@ -127,12 +148,12 @@
     </div>
   </section>
 
-  <section class="rank">
+  <section class="rank" id="rankBox">
     <h2 id="rankTitle"></h2>
     <div id="rankList"><p class="status">Cargando…</p></div>
   </section>
 
-  <p class="back"><a id="backLink" href="/">VOLVER AL CRUCIGRAMA</a></p>
+  <p class="back" id="backBox"><a id="backLink" href="/">VOLVER AL CRUCIGRAMA</a></p>
 </main>
 
 <script>
@@ -161,7 +182,7 @@ var TOP_N = 50;
 var HONOR_RESPUESTA = "HONOR";
 
 /* Crucigramas con Hall of Fame (002 en adelante); lo genera generate_homepage.py */
-var CROSSWORDS = [{"num": "002", "name": "Crucigrama Gamberro 002", "archivo": "Crucigrama_Gamberro_002.html", "casillas": 120, "storage_key": "crossword_state_cw_3dc0acd50e52"}, {"num": "003", "name": "Crucigrama Gamberro 003", "archivo": "Crucigrama_gamberro_003.html", "casillas": 119, "storage_key": "crossword_state_cw_e3b69d6ff018"}, {"num": "004", "name": "Crucigrama Gamberro 004", "archivo": "Crucigrama_gamberro_004.html", "casillas": 119, "storage_key": "crossword_state_cw_5bbe027f61ef"}, {"num": "005", "name": "Crucigrama Gamberro 005", "archivo": "Crucigrama_Gamberro_005.html", "casillas": 120, "storage_key": "crossword_state_cw_19934509fd06"}, {"num": "006", "name": "Crucigrama Gamberro 006", "archivo": "CRUCIGRAMA_GAMBERRO_006.html", "casillas": 117, "storage_key": "crossword_state_cw_52cb41a0a981"}];
+var CROSSWORDS = [{"num": "002", "name": "Crucigrama Gamberro 002", "archivo": "Crucigrama_Gamberro_002.html", "casillas": 120, "storage_key": "crossword_state_cw_3dc0acd50e52", "miniatura": "miniaturas/hof/hof_002.png"}, {"num": "003", "name": "Crucigrama Gamberro 003", "archivo": "Crucigrama_gamberro_003.html", "casillas": 119, "storage_key": "crossword_state_cw_e3b69d6ff018", "miniatura": "miniaturas/hof/hof_003.png"}, {"num": "004", "name": "Crucigrama Gamberro 004", "archivo": "Crucigrama_gamberro_004.html", "casillas": 119, "storage_key": "crossword_state_cw_5bbe027f61ef", "miniatura": "miniaturas/hof/hof_004.png"}, {"num": "005", "name": "Crucigrama Gamberro 005", "archivo": "Crucigrama_Gamberro_005.html", "casillas": 120, "storage_key": "crossword_state_cw_19934509fd06", "miniatura": "miniaturas/hof/hof_005.png"}, {"num": "006", "name": "Crucigrama Gamberro 006", "archivo": "CRUCIGRAMA_GAMBERRO_006.html", "casillas": 117, "storage_key": "crossword_state_cw_52cb41a0a981", "miniatura": "miniaturas/hof/hof_006.png"}];
 
 /* ------------------------------------------------------------------ utilidades */
 var ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -268,6 +289,16 @@ function hofLoadRaw(cw) {
     if (!r.ok) throw new Error("csv " + r.status);
     return r.text();
   }).then(function (txt) { return hofRowsFromCSV(txt).concat(hofLocalRows); });
+}
+
+/* Todas las filas de todos los crucigramas (una sola lectura de la hoja): para la galeria. */
+function hofLoadAllRaw() {
+  if (HOF_MODE === "simulado") {
+    return Promise.all(CROSSWORDS.map(simSeeds)).then(function (lists) {
+      return [].concat.apply([], lists).concat(simStored()).concat(hofLocalRows);
+    });
+  }
+  return hofLoadRaw(null);
 }
 
 function hofSubmit(row) {
@@ -461,26 +492,72 @@ function hofSetupPublish(cw) {
 }
 
 /* ------------------------------------------------------------------ arranque */
+/* Galeria: miniaturas de los crucigramas que ya tienen alguien en el ranking (los demas no salen). */
+function hofGallery() {
+  $("galleryBox").hidden = false;
+  $("rankBox").hidden = true;
+  $("backBox").hidden = true;
+  $("allLink").hidden = true;
+  $("hofSub").textContent = "Elige un crucigrama para ver su clasificación";
+  document.title = "Hall of Fame | RECREO.ZONE";
+  if (HOF_MODE === "simulado") $("simBanner").hidden = false;
+
+  var cards = $("cards"), msg = $("galleryMsg");
+  cards.textContent = "";
+  msg.textContent = "Cargando…";
+  msg.hidden = false;
+  if (!CROSSWORDS.length) { msg.textContent = "No hay ningún Hall of Fame disponible todavía."; return Promise.resolve(); }
+
+  return hofLoadAllRaw().then(async function (raw) {
+    var items = [];
+    for (var i = 0; i < CROSSWORDS.length; i++) {
+      var rows = await hofValidRows(raw, CROSSWORDS[i]);
+      if (rows.length) items.push({ cw: CROSSWORDS[i], n: rows.length });
+    }
+    items.sort(function (a, b) { return parseInt(b.cw.num, 10) - parseInt(a.cw.num, 10); });   // el mas reciente primero
+    cards.textContent = "";
+    if (!items.length) {
+      var last = CROSSWORDS[CROSSWORDS.length - 1];
+      msg.textContent = "Todavía no hay nadie en ningún Hall of Fame. Puede que el primero seas tú. ";
+      var a = document.createElement("a");
+      a.href = last.archivo; a.textContent = "Jugar el último crucigrama";
+      msg.appendChild(a);
+      return;
+    }
+    msg.hidden = true;
+    items.forEach(function (it) {
+      var card = document.createElement("a");
+      card.className = "card";
+      card.href = "?crossword=" + it.cw.num;
+      var img = document.createElement("img");
+      img.src = it.cw.miniatura; img.width = 150; img.height = 150; img.loading = "lazy";
+      img.alt = "Cuadrícula vacía del " + it.cw.name;
+      var num = document.createElement("span"); num.className = "num"; num.textContent = "Nº " + it.cw.num;
+      var cnt = document.createElement("span"); cnt.className = "cnt";
+      cnt.textContent = it.n + (it.n === 1 ? " jugador" : " jugadores");
+      card.appendChild(img); card.appendChild(num); card.appendChild(cnt);
+      cards.appendChild(card);
+    });
+  }).catch(function () {
+    cards.textContent = "";
+    msg.hidden = false;
+    msg.textContent = "El Hall of Fame no está disponible temporalmente. Vuelve a intentarlo en un rato.";
+  });
+}
+
 function hofInit() {
   var wanted = new URLSearchParams(location.search).get("crossword");
   wanted = wanted && /^\d+$/.test(wanted) ? pad3(parseInt(wanted, 10)) : null;
-  hofCw = CROSSWORDS.filter(function (c) { return c.num === wanted; })[0] || CROSSWORDS[CROSSWORDS.length - 1];
+  hofCw = wanted ? (CROSSWORDS.filter(function (c) { return c.num === wanted; })[0] || null) : null;
 
-  if (!hofCw) { $("rankList").textContent = "No hay ningún Hall of Fame disponible todavía."; return; }
+  if (!hofCw) { hofGallery(); return; }      // sin crucigrama (o desconocido): galeria
 
   $("hofSub").textContent = hofCw.name.toUpperCase();
   $("rankTitle").textContent = "HALL OF FAME · " + hofCw.name.toUpperCase();
   $("backLink").href = hofCw.archivo;
+  $("allLink").hidden = false;
   document.title = "Hall of Fame " + hofCw.num + " | RECREO.ZONE";
   if (HOF_MODE === "simulado") $("simBanner").hidden = false;
-
-  var nav = $("others");
-  CROSSWORDS.forEach(function (c) {
-    var a = document.createElement("a");
-    a.href = "?crossword=" + c.num; a.textContent = c.num;
-    if (c === hofCw) a.className = "current";
-    nav.appendChild(a);
-  });
 
   hofSetupPublish(hofCw);
   hofRefreshRanking(hofCw);
