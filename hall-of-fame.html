@@ -88,6 +88,7 @@
   .row .date, .row .time { text-align: right; color: var(--muted); font-size: 0.85rem; }
   .row .you { color: var(--accent-dark); font-weight: 800; font-size: 0.85rem; min-width: 3.2em; }
   .row.is-you { background: var(--you-bg); border-radius: 6px; }
+  .row.is-autor .ini { color: var(--accent-dark); }
   .empty, .status { text-align: center; color: var(--muted); padding: 14px 0; }
   .back { text-align: center; margin-top: 8px; }
   .back a { color: var(--link); font-weight: 700; }
@@ -136,7 +137,7 @@
     <div id="stageIni" hidden>
       <form id="iniForm" autocomplete="off">
         <label for="iniInput">Iniciales:</label>
-        <input type="text" id="iniInput" maxlength="4" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
+        <input type="text" id="iniInput" maxlength="5" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false">
         <p style="margin:14px 0 0"><button type="submit" id="iniBtn">ENTRAR EN EL HALL OF FAME</button></p>
       </form>
       <p class="msg" id="iniMsg" role="status"></p>
@@ -180,6 +181,11 @@ var SAL = "NJi4xOilbWnQhygEBYyqoOpbRKRO-cFWdN8kTA8NgNz2u9nX";  // fija: si cambi
 var TIEMPO_MIN = 60;       // segundos; descarta resultados absurdos
 var TIEMPO_MAX = 86400;    // 24 h
 var HONOR_RESPUESTA = "HONOR";
+/* El autor abre la lista de los crucigramas indicados, con este tiempo (segundos). Es una fila fija del
+   codigo (no viene de la hoja, no cuenta como jugador en la galeria) y "AUTOR" no se puede usar como
+   iniciales. Un crucigrama que no aparezca aqui no lleva fila de autor (el 006 ya tiene su primero). */
+var AUTOR_INICIALES = "AUTOR";
+var AUTOR_TIEMPOS = { "002": 176, "003": 184, "004": 179, "005": 187 };
 
 /* Crucigramas con Hall of Fame (002 en adelante); lo genera generate_homepage.py */
 var CROSSWORDS = [{"num": "002", "name": "Crucigrama Gamberro 002", "archivo": "Crucigrama_Gamberro_002.html", "casillas": 120, "storage_key": "crossword_state_cw_3dc0acd50e52", "miniatura": "miniaturas/hof/hof_002.png"}, {"num": "003", "name": "Crucigrama Gamberro 003", "archivo": "Crucigrama_gamberro_003.html", "casillas": 119, "storage_key": "crossword_state_cw_e3b69d6ff018", "miniatura": "miniaturas/hof/hof_003.png"}, {"num": "004", "name": "Crucigrama Gamberro 004", "archivo": "Crucigrama_gamberro_004.html", "casillas": 119, "storage_key": "crossword_state_cw_5bbe027f61ef", "miniatura": "miniaturas/hof/hof_004.png"}, {"num": "005", "name": "Crucigrama Gamberro 005", "archivo": "Crucigrama_Gamberro_005.html", "casillas": 120, "storage_key": "crossword_state_cw_19934509fd06", "miniatura": "miniaturas/hof/hof_005.png"}, {"num": "006", "name": "Crucigrama Gamberro 006", "archivo": "CRUCIGRAMA_GAMBERRO_006.html", "casillas": 117, "storage_key": "crossword_state_cw_52cb41a0a981", "miniatura": "miniaturas/hof/hof_006.png"}];
@@ -364,7 +370,7 @@ async function hofValidRows(rawRows, cw) {
     if (!/^\d+$/.test(r.tiempo_s)) continue;
     var t = parseInt(r.tiempo_s, 10);
     if (t < TIEMPO_MIN || t > TIEMPO_MAX) continue;
-    if (!/^[A-ZÑ0-9]{2,4}$/.test(r.iniciales)) continue;
+    if (!/^[A-ZÑ0-9]{2,5}$/.test(r.iniciales) || r.iniciales === AUTOR_INICIALES) continue;
     if (seen[r.game_id]) continue;
     if ((await hofSeal({ crossword_id: r.crossword_id, game_id: r.game_id, tiempo_s: r.tiempo_s, iniciales: r.iniciales })) !== r.sello) continue;
     seen[r.game_id] = true;
@@ -375,7 +381,7 @@ async function hofValidRows(rawRows, cw) {
 
 /* Orden de llegada: por la "Marca temporal" de la hoja (la pone Google); las filas sin hora
    (recien enviadas, o sin marca) van al final, en el orden en que llegaron. Sin empates. */
-function hofRank(rows) {
+function hofRank(rows, cw) {
   var items = rows.map(function (r, i) {
     var m = hofParseMarca(r.marca);
     return { r: r, i: i, ts: m.ts === null ? Infinity : m.ts, fecha: m.fecha };
@@ -384,15 +390,19 @@ function hofRank(rows) {
     if (a.ts !== b.ts) return a.ts < b.ts ? -1 : 1;    // (Infinity - Infinity daria NaN)
     return a.i - b.i;
   });
-  return items.map(function (x, i) {
-    return { pos: i + 1, game_id: x.r.game_id, iniciales: x.r.iniciales, tiempo_s: x.r.tiempo_s,
-             fecha: x.fecha, isYou: hofIsPublished(x.r.game_id) };
+  var list = items.map(function (x) {
+    return { game_id: x.r.game_id, iniciales: x.r.iniciales, tiempo_s: x.r.tiempo_s,
+             fecha: x.fecha, isYou: hofIsPublished(x.r.game_id), isAutor: false };
   });
+  var tAutor = cw && AUTOR_TIEMPOS[cw.num];
+  if (tAutor) list.unshift({ game_id: "", iniciales: AUTOR_INICIALES, tiempo_s: tAutor, fecha: "", isYou: false, isAutor: true });
+  list.forEach(function (e, i) { e.pos = i + 1; });
+  return list;
 }
 
 function hofRowEl(e) {
   var d = document.createElement("div");
-  d.className = "row" + (e.isYou ? " is-you" : "");
+  d.className = "row" + (e.isYou ? " is-you" : "") + (e.isAutor ? " is-autor" : "");
   var a = document.createElement("span"); a.className = "pos"; a.textContent = e.pos + ".";
   var b = document.createElement("span"); b.className = "ini"; b.textContent = e.iniciales;      // textContent, nunca innerHTML
   var f = document.createElement("span"); f.className = "date"; f.textContent = e.fecha;
@@ -405,19 +415,20 @@ function hofRowEl(e) {
 function hofRenderRanking(ranked) {
   var box = $("rankList");
   box.textContent = "";
-  if (!ranked.length) {
-    var p = document.createElement("p"); p.className = "empty";
-    p.textContent = "Todavía no hay nadie en este Hall of Fame. Puede ser tuyo.";
-    box.appendChild(p);
-    return;
-  }
+  var players = ranked.filter(function (e) { return !e.isAutor; }).length;
   ranked.forEach(function (e) { box.appendChild(hofRowEl(e)); });
+  if (!players) {
+    var p = document.createElement("p"); p.className = "empty";
+    p.textContent = ranked.length ? "Todavía no hay nadie más. Puede ser tuyo el siguiente puesto."
+                                  : "Todavía no hay nadie en este Hall of Fame. Puede ser tuyo.";
+    box.appendChild(p);
+  }
 }
 
 var hofRanked = [];
 function hofRefreshRanking(cw) {
   return hofLoadRaw(cw).then(function (raw) { return hofValidRows(raw, cw); }).then(function (rows) {
-    hofRanked = hofRank(rows);
+    hofRanked = hofRank(rows, cw);
     hofRenderRanking(hofRanked);
   }).catch(function () {
     $("rankList").textContent = "";
@@ -486,10 +497,11 @@ function hofSetupPublish(cw) {
   $("iniForm").addEventListener("submit", function (ev) {
     ev.preventDefault();
     var ini = $("iniInput").value.trim().toUpperCase();
-    if (!/^[A-ZÑ0-9]{2,4}$/.test(ini)) {
-      $("iniMsg").textContent = "De 2 a 4 caracteres: letras (A–Z, Ñ) o números, sin espacios ni signos.";
+    if (!/^[A-ZÑ0-9]{2,5}$/.test(ini)) {
+      $("iniMsg").textContent = "De 2 a 5 caracteres: letras (A–Z, Ñ) o números, sin espacios ni signos.";
       return;
     }
+    if (ini === AUTOR_INICIALES) { $("iniMsg").textContent = "Esas iniciales están reservadas. Elige otras."; return; }
     $("iniMsg").textContent = "";
     $("iniBtn").disabled = true;
     var row = { crossword_id: hofClaim.crossword_id, game_id: hofClaim.game_id, tiempo_s: hofClaim.tiempo_s, iniciales: ini };
