@@ -11,7 +11,7 @@
 <meta property="og:description" content="Crucigramas online con humor, juegos de palabras y un punto gamberro.">
 <meta property="og:url" content="https://recreo.zone/">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://recreo.zone/miniaturas/miniatura_006.png">
+<meta property="og:image" content="https://recreo.zone/miniaturas/miniatura_008.png">
 <script data-goatcounter="https://recreozone.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
   :root {
@@ -96,19 +96,42 @@
   @media (min-width: 700px) {
     .previous-list { flex-direction: row; justify-content: center; }
   }
-  .prev-item {
-    margin: 0;
-    text-align: center;
+  .prev-item { margin: 0; text-align: center; }
+  /* tarjeta clicable: borde verde, sombra, sube al pasar el raton y boton JUGAR */
+  .prev-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    background: var(--panel-bg);
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 8px 8px 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .prev-item img {
+  .prev-link:hover, .prev-link:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+    outline: none;
+  }
+  .prev-link img {
+    display: block;
     max-width: 160px;
     height: auto;
     border-radius: 4px;
+    margin: 0 auto;
   }
-  .prev-item figcaption {
+  .prev-num { display: block; margin-top: 8px; font-size: 0.85rem; color: var(--muted); }
+  .prev-cta {
+    display: inline-block;
     margin-top: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
     font-size: 0.8rem;
-    color: var(--muted);
+    letter-spacing: 0.04em;
+    padding: 5px 16px;
+    border-radius: 6px;
   }
   .hof-link { text-align: center; }
   .hof-link a {
@@ -175,10 +198,10 @@
   <main>
     <section class="current">
       <h1>Crucigrama Gamberro</h1>
-      <p class="crossword-number">Nº 006</p>
-      <img class="current-grid" src="miniaturas/miniatura_006.png" alt="Cuadrícula vacía del Crucigrama Gamberro 006">
+      <p class="crossword-number">Nº 008</p>
+      <img class="current-grid" src="miniaturas/miniatura_008.png" alt="Cuadrícula vacía del Crucigrama Gamberro 008">
       <div>
-        <a class="play-btn" id="playBtn" href="CRUCIGRAMA_GAMBERRO_006.html?ref=home">JUGAR</a>
+        <a class="play-btn" id="playBtn" href="Crucigrama_gamberro_008.html?ref=home">JUGAR</a>
       </div>
     </section>
 
@@ -186,18 +209,27 @@
       <h2>Crucigramas gamberros online gratuitos, publicados de vez en cuando</h2>
       <p class="previous-sub">Cada Crucigrama Gamberro es distinto — mismo espíritu, pistas nuevas.</p>
       <div class="previous-list">
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 005</figcaption>
-      </figure>
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 004</figcaption>
-      </figure>
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_003.png" alt="Crucigrama Gamberro 003 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 003</figcaption>
-      </figure>
+      <div class="prev-item">
+        <a class="prev-link" href="CRUCIGRAMA_GAMBERRO_006.html?ref=home" data-num="006">
+          <img src="miniaturas/miniatura_006.png" alt="Crucigrama Gamberro 006 (cuadricula vacia)" loading="lazy">
+          <span class="prev-num">Nº 006</span>
+          <span class="prev-cta">JUGAR</span>
+        </a>
+      </div>
+      <div class="prev-item">
+        <a class="prev-link" href="Crucigrama_Gamberro_005.html?ref=home" data-num="005">
+          <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
+          <span class="prev-num">Nº 005</span>
+          <span class="prev-cta">JUGAR</span>
+        </a>
+      </div>
+      <div class="prev-item">
+        <a class="prev-link" href="Crucigrama_gamberro_004.html?ref=home" data-num="004">
+          <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
+          <span class="prev-num">Nº 004</span>
+          <span class="prev-cta">JUGAR</span>
+        </a>
+      </div>
       </div>
     </section>
 
@@ -254,8 +286,12 @@
       gcSendThen(path, title, function () { location.href = el.href; });
     });
   }
-  trackLink(document.getElementById("playBtn"), "/home-jugar-006", "Portada: JUGAR 006");
+  trackLink(document.getElementById("playBtn"), "/home-jugar-008", "Portada: JUGAR 008");
   trackLink(document.getElementById("hofLink"), "/home-hall-of-fame", "Portada: Hall of Fame");
+  // crucigramas anteriores: mismo mecanismo (el evento sale antes de navegar)
+  Array.prototype.forEach.call(document.querySelectorAll(".prev-link"), function (a) {
+    trackLink(a, "/home-anterior-" + a.getAttribute("data-num"), "Portada: crucigrama anterior " + a.getAttribute("data-num"));
+  });
 
   function noop() {}
   document.getElementById("nextBtn").addEventListener("click", function () {
