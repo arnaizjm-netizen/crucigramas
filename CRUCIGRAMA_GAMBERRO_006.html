@@ -465,7 +465,9 @@
     finalElapsedMs: null,
     paused: false,       // el jugador ha parado el tiempo a mano; se reanuda al escribir una letra
     gameId: null,        // identificador de partida (8 car.), ver documento de reanudaciones
-    autoCheckDone: false // el comprobar automatico (cuadricula llena con errores) ya salto en esta partida
+    autoCheckDone: false, // el comprobar automatico (cuadricula llena con errores) ya salto en esta partida
+    siguienteMostrado: false, // el aviso "quiero el siguiente" ya salio en esta partida
+    recordatorioIaMostrado: false // el recordatorio de la IA ya salio en esta partida
   };
 
   for (var r = 0; r < N; r++) {
@@ -497,7 +499,9 @@
         finalElapsedMs: state.finalElapsedMs,
         paused: state.paused,
         gameId: state.gameId,
-        autoCheckDone: state.autoCheckDone
+        autoCheckDone: state.autoCheckDone,
+        siguienteMostrado: state.siguienteMostrado,
+        recordatorioIaMostrado: state.recordatorioIaMostrado
       }));
     } catch (e) { /* almacenamiento no disponible: se ignora */ }
   }
@@ -528,6 +532,8 @@
     state.paused = !!saved.paused && !state.finished;
     state.gameId = (typeof saved.gameId === "string" && saved.gameId.length === 8) ? saved.gameId : null;
     state.autoCheckDone = !!saved.autoCheckDone;
+    state.siguienteMostrado = !!saved.siguienteMostrado;
+    state.recordatorioIaMostrado = !!saved.recordatorioIaMostrado;
   }
 
   loadState();
@@ -708,7 +714,6 @@
   // variables sueltas, no persistidas -- se reinician a mano en "Reiniciar"
   var defsShownCount = 0;
   var ayudaUsadaEstaPartida = false;
-  var recordatorioIaMostrado = false;
 
   function updateDefs() {
     var labelEl = document.getElementById("defsLabel");
@@ -755,18 +760,20 @@
     fitDefsText();
 
     defsShownCount++;
+    // recordatorio de la IA: una sola vez por partida (queda guardado, no reaparece al recargar)
     var elegible = Object.keys(state.wordsDone).length >= 6;
-    if (elegible && !ayudaUsadaEstaPartida && defsShownCount % 5 === 0) {
-      if (!recordatorioIaMostrado) {
-        recordatorioIaMostrado = true;
-        gcEvent("-recordatorio-ia", "Recordatorio IA");
-      }
+    if (elegible && !ayudaUsadaEstaPartida && !state.recordatorioIaMostrado && defsShownCount % 5 === 0) {
       var reminder = document.createElement("span");
       reminder.className = "ayuda-reminder";
       reminder.textContent = "¿Necesitas una ayudita? Pídesela a la IA.";
       textEl.appendChild(reminder);
-      // si no cabe sin agrandar el panel (y mover la cuadricula), no se muestra
-      if (defsReserve && document.querySelector(".defs-panel").offsetHeight > defsReserve + 1) textEl.removeChild(reminder);
+      if (defsReserve && document.querySelector(".defs-panel").offsetHeight > defsReserve + 1) {
+        textEl.removeChild(reminder);   // no cabe sin mover la cuadricula: se intentara con otra definicion
+      } else {
+        state.recordatorioIaMostrado = true;
+        saveState();
+        gcEvent("-recordatorio-ia", "Recordatorio IA");
+      }
     }
   }
 
@@ -916,9 +923,9 @@
     state.gameId = GAME_PREFIX + randomPartidaCodigo();
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
-    recordatorioIaMostrado = false;
+    state.recordatorioIaMostrado = false;
     state.autoCheckDone = false;
-    siguienteMostrado = false;
+    state.siguienteMostrado = false;
     hideSiguiente();
     checkBtn.style.display = "";
     exitCheckMode();
@@ -1123,6 +1130,7 @@
   // ---------- victoria ----------
   function finishGame() {
     var isNewCompletion = !state.finished;
+    hideSiguiente();
     pauseTimer();
     state.paused = false;
     pauseBtn.style.display = "none";
@@ -1216,18 +1224,20 @@
   }
 
   // ---------- aviso "quiero el siguiente" (35% de casillas rellenadas) ----------
-  // variable suelta, no persistida -- se reinicia en "Reiniciar"
-  var siguienteMostrado = false;
+  // Sale una sola vez por partida (queda guardado: no reaparece al recargar) y sin interrumpir:
+  // solo cuando el jugador lleva unos segundos sin escribir.
+  var SIGUIENTE_ESPERA_MS = 4000;
   var siguienteToastEl = document.getElementById("siguienteToast");
   var siguienteTimeout = null;
+  var siguienteEspera = null;
 
   function hideSiguiente() {
     clearTimeout(siguienteTimeout);
+    clearTimeout(siguienteEspera);
     siguienteToastEl.classList.remove("show");
   }
 
-  function checkSiguienteAviso() {
-    if (siguienteMostrado || state.finished) return;
+  function fraccionRellena() {
     var total = 0, rellenas = 0;
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
@@ -1236,12 +1246,25 @@
         if (state.grid[r][c]) rellenas++;
       }
     }
-    if (total === 0 || rellenas / total < 0.35) return;
-    siguienteMostrado = true;
+    return total ? rellenas / total : 0;
+  }
+
+  function mostrarSiguiente() {
+    if (state.siguienteMostrado || state.finished) return;
+    state.siguienteMostrado = true;
+    saveState();
     gcEvent("-aviso-siguiente", "Aviso siguiente");
     siguienteToastEl.classList.add("show");
     clearTimeout(siguienteTimeout);
     siguienteTimeout = setTimeout(hideSiguiente, 15000);
+  }
+
+  function checkSiguienteAviso() {
+    if (state.siguienteMostrado || state.finished) return;
+    if (fraccionRellena() < 0.35) return;
+    // cada letra reinicia la espera: aparece cuando el jugador hace una pausa
+    clearTimeout(siguienteEspera);
+    siguienteEspera = setTimeout(mostrarSiguiente, SIGUIENTE_ESPERA_MS);
   }
 
   document.getElementById("siguienteClose").addEventListener("click", hideSiguiente);
@@ -1435,6 +1458,7 @@
     } else {
       // partida guardada ya con la cuadricula llena: el momento del aviso automatico ya paso
       if (isGridFull()) state.autoCheckDone = true;
+      if (fraccionRellena() >= 0.35) state.siguienteMostrado = true;
       if (hasAny) ensureTimerRunning();
     }
     updatePauseUI();
