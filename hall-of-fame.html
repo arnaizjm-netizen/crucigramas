@@ -77,17 +77,17 @@
   form > * { vertical-align: middle; }
   label { display: inline-block; margin-right: 6px; }
 
-  .rank h2 { font-size: 1rem; text-align: center; margin: 0 0 12px; letter-spacing: 0.04em; }
+  .rank h2 { font-size: 1rem; text-align: center; margin: 0 0 4px; letter-spacing: 0.04em; }
+  .rank .note { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 0 0 12px; }
   .row {
-    display: grid; grid-template-columns: 3.2em 1fr auto auto; gap: 8px; align-items: baseline;
+    display: grid; grid-template-columns: 2.6em 1fr auto auto auto; gap: 8px; align-items: baseline;
     padding: 7px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums;
   }
   .row .pos { text-align: right; color: var(--muted); }
   .row .ini { font-weight: 700; letter-spacing: 0.08em; }
-  .row .time { text-align: right; }
-  .row .you { color: var(--accent-dark); font-weight: 800; font-size: 0.85rem; min-width: 4em; }
+  .row .date, .row .time { text-align: right; color: var(--muted); font-size: 0.85rem; }
+  .row .you { color: var(--accent-dark); font-weight: 800; font-size: 0.85rem; min-width: 3.2em; }
   .row.is-you { background: var(--you-bg); border-radius: 6px; }
-  .sep { text-align: center; color: var(--muted); padding: 6px 0; letter-spacing: 0.2em; }
   .empty, .status { text-align: center; color: var(--muted); padding: 14px 0; }
   .back { text-align: center; margin-top: 8px; }
   .back a { color: var(--link); font-weight: 700; }
@@ -150,6 +150,7 @@
 
   <section class="rank" id="rankBox">
     <h2 id="rankTitle"></h2>
+    <p class="note" id="rankNote">Por orden de llegada</p>
     <div id="rankList"><p class="status">Cargando…</p></div>
   </section>
 
@@ -178,7 +179,6 @@ var SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTcdAhg8mc0
 var SAL = "NJi4xOilbWnQhygEBYyqoOpbRKRO-cFWdN8kTA8NgNz2u9nX";  // fija: si cambia, los sellos anteriores dejan de valer
 var TIEMPO_MIN = 60;       // segundos; descarta resultados absurdos
 var TIEMPO_MAX = 86400;    // 24 h
-var TOP_N = 50;
 var HONOR_RESPUESTA = "HONOR";
 
 /* Crucigramas con Hall of Fame (002 en adelante); lo genera generate_homepage.py */
@@ -225,8 +225,31 @@ function hofDecode(raw) {
     game_id: String(raw.game_id == null ? "" : raw.game_id).trim(),
     tiempo_s: String(raw.tiempo_s == null ? "" : raw.tiempo_s).trim(),
     iniciales: ini,
-    sello: String(raw.sello == null ? "" : raw.sello).trim().toLowerCase()
+    sello: String(raw.sello == null ? "" : raw.sello).trim().toLowerCase(),
+    marca: String(raw.marca == null ? "" : raw.marca).trim()
   };
+}
+
+/* "Marca temporal" de la hoja (la pone Google al recibir el envio): d/m/aaaa h:mm:ss, o
+   aaaa-mm-dd hh:mm:ss. Devuelve { ts, fecha }; ts es null si no trae hora (o no se entiende). */
+function hofParseMarca(str) {
+  var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(str || "");
+  var y, mo, d;
+  if (m) { d = +m[1]; mo = +m[2]; y = +m[3]; }
+  else {
+    m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(str || "");
+    if (!m) return { ts: null, fecha: "" };
+    y = +m[1]; mo = +m[2]; d = +m[3];
+  }
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return { ts: null, fecha: "" };
+  var fecha = pad2(d) + "/" + pad2(mo) + "/" + y;
+  var ts = m[4] === undefined ? null : Date.UTC(y, mo - 1, d, +m[4], +m[5], +(m[6] || 0));
+  return { ts: ts, fecha: fecha };
+}
+/* Fecha de hoy para las filas enviadas en esta sesion (sin hora: van al final hasta que la hoja las devuelva). */
+function hofHoy() {
+  var n = new Date();
+  return n.getDate() + "/" + (n.getMonth() + 1) + "/" + n.getFullYear();
 }
 
 /* ------------------------------------------------------------------ CSV */
@@ -255,10 +278,12 @@ function hofRowsFromCSV(text) {
     idx[names[k]] = head.indexOf(names[k]);
     if (idx[names[k]] < 0) return [];
   }
+  var im = head.indexOf("marca temporal");     // opcional: sin ella se ordena por fila
   var out = [];
   for (var i = 1; i < t.length; i++) {
     var r = t[i], o = {};
     for (var j = 0; j < names.length; j++) o[names[j]] = r[idx[names[j]]];
+    if (im >= 0) o.marca = r[im];
     out.push(o);
   }
   return out;
@@ -275,7 +300,12 @@ function simSeeds(cw) {
               ["PGM", 1122, "demo04"], ["MRG", 1122, "demo05"], ["LSD", 1490, "demo06"], ["NAT", 2044, "demo07"]];
   return Promise.all(demo.map(function (d) {
     var row = { crossword_id: cw.num, game_id: pref + d[2], tiempo_s: d[1], iniciales: d[0] };
-    return hofSeal(row).then(function (s) { row.sello = s; return hofEncode(row); });
+    return hofSeal(row).then(function (s) {
+      row.sello = s;
+      var enc = hofEncode(row);
+      enc.marca = "19/09/2026 1" + d[2].slice(-1) + ":00:00";
+      return enc;
+    });
   }));
 }
 
@@ -303,20 +333,21 @@ function hofLoadAllRaw() {
 
 function hofSubmit(row) {
   var enc = hofEncode(row);
+  enc.marca = hofHoy();
   if (HOF_MODE === "simulado") {
     var list = simStored(); list.push(enc);
     localStorage.setItem(SIM_KEY, JSON.stringify(list));
     return Promise.resolve();
   }
   var body = new URLSearchParams();
-  Object.keys(FORM_FIELDS).forEach(function (k) { body.append(FORM_FIELDS[k], enc[k]); });
+  Object.keys(FORM_FIELDS).forEach(function (k) { body.append(FORM_FIELDS[k], enc[k]); });   // marca no se envia
   // no-cors: la respuesta es opaca; si no hay error de red se da por enviado
   return fetch(FORM_ACTION, { method: "POST", mode: "no-cors", body: body }).then(function () {
     hofLocalRows.push(enc);
   });
 }
 
-/* ------------------------------------------------------------------ validacion y ranking */
+/* ------------------------------------------------------------------ validacion y orden de llegada */
 function hofIsPublished(gameId) {
   try { return localStorage.getItem("hof_pub_" + gameId) === "1"; } catch (e) { return false; }
 }
@@ -337,20 +368,25 @@ async function hofValidRows(rawRows, cw) {
     if (seen[r.game_id]) continue;
     if ((await hofSeal({ crossword_id: r.crossword_id, game_id: r.game_id, tiempo_s: r.tiempo_s, iniciales: r.iniciales })) !== r.sello) continue;
     seen[r.game_id] = true;
-    out.push({ game_id: r.game_id, tiempo_s: t, iniciales: r.iniciales });
+    out.push({ game_id: r.game_id, tiempo_s: t, iniciales: r.iniciales, marca: r.marca });
   }
   return out;
 }
 
-/* Orden por tiempo; los iguales comparten posicion (1, 2, 2, 4). */
+/* Orden de llegada: por la "Marca temporal" de la hoja (la pone Google); las filas sin hora
+   (recien enviadas, o sin marca) van al final, en el orden en que llegaron. Sin empates. */
 function hofRank(rows) {
-  var sorted = rows.map(function (r, i) { return { r: r, i: i }; })
-    .sort(function (a, b) { return (a.r.tiempo_s - b.r.tiempo_s) || (a.i - b.i); })
-    .map(function (x) { return x.r; });
-  var pos = 0;
-  return sorted.map(function (r, i) {
-    if (i === 0 || r.tiempo_s !== sorted[i - 1].tiempo_s) pos = i + 1;
-    return { pos: pos, game_id: r.game_id, iniciales: r.iniciales, tiempo_s: r.tiempo_s, isYou: hofIsPublished(r.game_id) };
+  var items = rows.map(function (r, i) {
+    var m = hofParseMarca(r.marca);
+    return { r: r, i: i, ts: m.ts === null ? Infinity : m.ts, fecha: m.fecha };
+  });
+  items.sort(function (a, b) {
+    if (a.ts !== b.ts) return a.ts < b.ts ? -1 : 1;    // (Infinity - Infinity daria NaN)
+    return a.i - b.i;
+  });
+  return items.map(function (x, i) {
+    return { pos: i + 1, game_id: x.r.game_id, iniciales: x.r.iniciales, tiempo_s: x.r.tiempo_s,
+             fecha: x.fecha, isYou: hofIsPublished(x.r.game_id) };
   });
 }
 
@@ -359,9 +395,10 @@ function hofRowEl(e) {
   d.className = "row" + (e.isYou ? " is-you" : "");
   var a = document.createElement("span"); a.className = "pos"; a.textContent = e.pos + ".";
   var b = document.createElement("span"); b.className = "ini"; b.textContent = e.iniciales;      // textContent, nunca innerHTML
+  var f = document.createElement("span"); f.className = "date"; f.textContent = e.fecha;
   var c = document.createElement("span"); c.className = "time"; c.textContent = fmtTime(e.tiempo_s);
   var y = document.createElement("span"); y.className = "you"; y.textContent = e.isYou ? "← TÚ" : "";
-  d.appendChild(a); d.appendChild(b); d.appendChild(c); d.appendChild(y);
+  d.appendChild(a); d.appendChild(b); d.appendChild(f); d.appendChild(c); d.appendChild(y);
   return d;
 }
 
@@ -374,13 +411,7 @@ function hofRenderRanking(ranked) {
     box.appendChild(p);
     return;
   }
-  ranked.slice(0, TOP_N).forEach(function (e) { box.appendChild(hofRowEl(e)); });
-  var outside = ranked.slice(TOP_N).filter(function (e) { return e.isYou; });
-  if (outside.length) {
-    var s = document.createElement("div"); s.className = "sep"; s.textContent = "────────";
-    box.appendChild(s);
-    outside.forEach(function (e) { box.appendChild(hofRowEl(e)); });
-  }
+  ranked.forEach(function (e) { box.appendChild(hofRowEl(e)); });
 }
 
 var hofRanked = [];
@@ -468,8 +499,8 @@ function hofSetupPublish(cw) {
       return hofRefreshRanking(hofCw);
     }).then(function () {
       var mine = hofRanked.filter(function (e) { return e.game_id === row.game_id; })[0];
-      $("doneMsg").textContent = mine ? "Ya estás dentro. Puesto " + mine.pos + " con " + fmtTime(mine.tiempo_s) + "."
-                                      : "Resultado enviado.";
+      $("doneMsg").textContent = mine ? "Ya estás dentro. Eres el Nº " + mine.pos + " en resolverlo."
+                                      : "Enviado.";
       hofShowStage("stageDone");
     }).catch(function () {
       $("iniBtn").disabled = false;   // no se marca como publicado: se puede reintentar
@@ -492,13 +523,13 @@ function hofSetupPublish(cw) {
 }
 
 /* ------------------------------------------------------------------ arranque */
-/* Galeria: miniaturas de los crucigramas que ya tienen alguien en el ranking (los demas no salen). */
+/* Galeria: miniaturas de los crucigramas que ya tienen alguien en su Hall of Fame (los demas no salen). */
 function hofGallery() {
   $("galleryBox").hidden = false;
   $("rankBox").hidden = true;
   $("backBox").hidden = true;
   $("allLink").hidden = true;
-  $("hofSub").textContent = "Elige un crucigrama para ver su clasificación";
+  $("hofSub").textContent = "Elige un crucigrama para ver quién lo ha resuelto";
   document.title = "Hall of Fame | RECREO.ZONE";
   if (HOF_MODE === "simulado") $("simBanner").hidden = false;
 
