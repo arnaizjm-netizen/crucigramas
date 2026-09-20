@@ -3,15 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Crucigrama Gamberro | RECREO.ZONE</title>
-<meta name="description" content="Crucigramas online con humor, juegos de palabras y un punto gamberro.">
+<title>Crucigramas gamberros online gratuitos | RECREO.ZONE</title>
+<meta name="description" content="Crucigramas gamberros online y gratuitos en español: juegos de palabras, dobles sentidos y pistas con ingenio. Un crucigrama nuevo de vez en cuando.">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="https://recreo.zone/">
-<meta property="og:title" content="Crucigrama Gamberro | RECREO.ZONE">
-<meta property="og:description" content="Crucigramas online con humor, juegos de palabras y un punto gamberro.">
-<meta property="og:url" content="https://recreo.zone/">
 <meta property="og:type" content="website">
-<meta property="og:image" content="https://recreo.zone/miniaturas/miniatura_008.png">
+<meta property="og:site_name" content="RECREO.ZONE">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Crucigramas gamberros online | RECREO.ZONE">
+<meta property="og:description" content="Crucigramas online en español con ingenio, juegos de palabras, dobles sentidos y cultura general.">
+<meta property="og:url" content="https://recreo.zone/">
+<meta property="og:image" content="https://recreo.zone/og/og_008.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Crucigramas gamberros online | RECREO.ZONE">
+<meta name="twitter:description" content="Crucigramas online en español con ingenio, juegos de palabras, dobles sentidos y cultura general.">
+<meta name="twitter:image" content="https://recreo.zone/og/og_008.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "RECREO.ZONE",
+  "url": "https://recreo.zone/",
+  "inLanguage": "es"
+}
+</script>
 <script data-goatcounter="https://recreozone.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
   :root {
@@ -180,6 +197,8 @@
   }
   footer a { color: var(--muted); }
   footer p { margin: 4px 0; }
+  footer nav.archive p { margin: 0 0 10px; }
+  footer nav.archive a { color: var(--muted); }
 
   @media (prefers-color-scheme: dark) {
     :root {
@@ -211,7 +230,7 @@
     </section>
 
     <section class="previous">
-      <h2>Crucigramas gamberros online gratuitos, publicados de vez en cuando</h2>
+      <h2>Crucigramas gamberros online gratuitos en español, publicados de vez en cuando</h2>
       <p class="previous-sub">Cada Crucigrama Gamberro es distinto — mismo espíritu, pistas nuevas.</p>
       <div class="previous-list">
       <div class="prev-item prev-item-play">
@@ -221,14 +240,6 @@
           <span class="prev-cta">JUGAR &rarr;</span>
         </a>
       </div>
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 005</figcaption>
-      </figure>
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 004</figcaption>
-      </figure>
       </div>
     </section>
 
@@ -253,6 +264,10 @@
   </main>
 
   <footer>
+  <nav class="archive" aria-label="Crucigramas anteriores">
+    <p>Crucigramas anteriores:
+      <a href="CRUCIGRAMA_GAMBERRO_006.html" data-num="006">Crucigrama Gamberro 006</a></p>
+  </nav>
     <p><a href="mailto:crucigramas@recreo.zone">Contacto</a> · <a href="/privacidad.html">Privacidad</a></p>
     <p>RECREO.ZONE es un proyecto personal y no comercial.</p>
   </footer>
@@ -287,6 +302,10 @@
   }
   trackLink(document.getElementById("playBtn"), "/home-jugar-008", "Portada: JUGAR 008");
   trackLink(document.getElementById("hofLink"), "/home-hall-of-fame", "Portada: Hall of Fame");
+  // archivo del pie: enlaces normales; solo se mide el clic
+  Array.prototype.forEach.call(document.querySelectorAll("nav.archive a"), function (a) {
+    trackLink(a, "/home-archivo-" + a.getAttribute("data-num"), "Portada: archivo " + a.getAttribute("data-num"));
+  });
   // crucigramas anteriores: mismo mecanismo (el evento sale antes de navegar)
   Array.prototype.forEach.call(document.querySelectorAll(".prev-link"), function (a) {
     trackLink(a, "/home-anterior-" + a.getAttribute("data-num"), "Portada: crucigrama anterior " + a.getAttribute("data-num"));
