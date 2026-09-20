@@ -33,6 +33,16 @@
   .brand { font-size: 0.95rem; font-weight: 800; letter-spacing: 0.06em; color: var(--link); text-decoration: none; }
   h1 { margin: 10px 0 2px; font-size: 1.6rem; letter-spacing: 0.08em; }
   .sub { margin: 0; color: var(--muted); }
+  /* que crucigrama es: miniatura de su cuadricula + su numero en grande */
+  .cw-badge {
+    display: inline-flex; align-items: center; gap: 16px; margin: 16px auto 0; padding: 10px 22px 10px 12px;
+    background: var(--panel-bg); border: 2px solid var(--accent); border-radius: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+  .cw-badge img { width: 84px; height: 84px; border-radius: 4px; background: #fdfdfb; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .cw-badge .cw-txt { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.05; }
+  .cw-badge .cw-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
+  .cw-badge .cw-num { font-size: 2.6rem; font-weight: 800; letter-spacing: 0.02em; color: var(--accent-dark); }
   .sim {
     margin: 14px auto 0; padding: 8px 12px; max-width: 460px;
     background: #fde3c0; color: #5a3a00; border-radius: 8px; font-size: 0.85rem;
@@ -122,6 +132,10 @@
     </picture>
     <h1>HALL OF FAME</h1>
     <p class="sub" id="hofSub"></p>
+    <div class="cw-badge" id="cwBadge" hidden>
+      <img id="cwThumb" alt="" width="84" height="84">
+      <div class="cw-txt"><span class="cw-label">CRUCIGRAMA GAMBERRO</span><span class="cw-num" id="cwNum"></span></div>
+    </div>
     <div class="sim" id="simBanner" hidden>Modo simulado: los resultados se guardan solo en este navegador.</div>
     <p class="all" id="allLink" hidden><a href="hall-of-fame.html">← Todos los Hall of Fame</a></p>
   </header>
@@ -647,8 +661,12 @@ function hofInit() {
 
   if (!hofCw) { hofGallery(); return; }      // sin crucigrama (o desconocido): galeria
 
-  $("hofSub").textContent = hofCw.name.toUpperCase();
-  $("rankTitle").textContent = "HALL OF FAME · " + hofCw.name.toUpperCase();
+  $("hofSub").hidden = true;                       // lo sustituye la tarjeta con miniatura y numero
+  $("cwThumb").src = hofCw.miniatura;
+  $("cwThumb").alt = "Cuadrícula del " + hofCw.name;
+  $("cwNum").textContent = "Nº " + hofCw.num;
+  $("cwBadge").hidden = false;
+  $("rankTitle").hidden = true;                    // ya no se repite el nombre sobre la lista
   $("backLink").href = hofCw.archivo;
   $("allLink").hidden = false;
   document.title = "Hall of Fame " + hofCw.num + " | RECREO.ZONE";

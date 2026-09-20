@@ -319,15 +319,19 @@
   .siguiente-toast {
     position: fixed;
     left: 50%;
-    bottom: 20px;
+    bottom: 12px;
     transform: translateX(-50%) translateY(12px);
     width: calc(100% - 32px);
     max-width: 420px;
     background: var(--panel-bg);
     color: var(--text);
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
-    padding: 14px 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.16);
+    padding: 9px 32px 9px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
     z-index: 60;
     opacity: 0;
     pointer-events: none;
@@ -338,7 +342,8 @@
     pointer-events: auto;
     transform: translateX(-50%) translateY(0);
   }
-  .siguiente-toast p { margin: 0 26px 10px 0; font-size: 0.92rem; }
+  .siguiente-toast p { margin: 0; font-size: 0.82rem; line-height: 1.3; flex: 1 1 210px; }
+  .siguiente-toast .feedback-link { padding: 6px 12px; font-size: 0.8rem; }
   .siguiente-toast p a { color: var(--accent-dark); }
   .siguiente-close {
     position: absolute;
