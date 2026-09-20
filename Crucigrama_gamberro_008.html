@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Crucigrama gamberro 008</title>
+<link rel="canonical" href="https://recreo.zone/Crucigrama_gamberro_008.html">
+<script data-goatcounter="https://recreozone.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --panel-bg: #ffffff;
+    --text: #1f2320;
+    --muted: #6b6f6c;
+    --accent: #2f6f4f;
+    --accent-dark: #1f5138;
+    --danger: #b3372c;
+    --danger-dark: #8c2b22;
+    --select-row: #cfe3ff;
+    --select-word: #8fb8ff;
+    --cell-border: #b8b8b8;
+    --grid-outer: #1f2320;
+    --wrong: #b3372c;
+    --empty-hint: #e8b23b;
+    --attention-bg: #fde3c0;
+    --win: #2f8f3f;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 10px 40px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: clamp(1.1rem, 4vw, 1.6rem);
+    margin: 4px 0 2px;
+    text-align: center;
+  }
+  .ia-note {
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    font-size: clamp(0.85rem, 2.6vw, 1rem);
+    font-weight: 700;
+    color: #c1440e;
+    background: #e9f7ec;
+    border: 1px solid var(--win);
+    border-radius: 8px;
+    text-align: center;
+    padding: 8px 14px;
+    margin: 4px 0 14px;
+  }
+  .save-note {
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+    margin: -8px 0 14px;
+    word-break: break-word;
+  }
+  .toolbar {
+    width: 100%;
+    max-width: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .timer {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: var(--panel-bg);
+    border-radius: 8px;
+    padding: 6px 12px;
+    min-width: 84px;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  button, .btn-link {
+    font: inherit;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    background: var(--panel-bg);
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  }
+  .btn-link { display: inline-block; text-decoration: none; }
+  @media (max-width: 480px) {
+    .buttons { gap: 6px; }
+    button, .btn-link { padding: 8px 9px; font-size: 0.92rem; }
+  }
+  button:active, .btn-link:active { transform: translateY(1px); }
+  #checkBtn.is-checking {
+    background: var(--danger);
+    color: #fff;
+  }
+  #resetBtn { color: var(--muted); }
+  #opinionLink { background: var(--accent); color: #fff; }
+  #pauseBtn.is-paused { background: var(--empty-hint); color: #1f2320; }
+  .timer.paused { opacity: 0.55; }
+  #saveImgBtn {
+    background: var(--win);
+    color: #fff;
+    display: none;
+  }
+  .grid-wrap {
+    width: 100%;
+    max-width: 640px;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .grid {
+    display: grid;
+    border: 2px solid var(--grid-outer);
+    background: var(--grid-outer);
+    gap: 1px;
+    width: min(94vw, 70vh, 640px);
+    aspect-ratio: 1 / 1;
+  }
+  .hdr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: clamp(0.5rem, 1.6vw, 0.85rem);
+    font-weight: 600;
+    user-select: none;
+  }
+  .corner { background: var(--bg); }
+  .cell-black {
+    background: #111;
+  }
+  .cell-white {
+    position: relative;
+    background: #fff;
+  }
+  .cell-white input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: clamp(0.7rem, 2.6vw, 1.15rem);
+    font-family: inherit;
+    color: var(--text);
+    padding: 0;
+    caret-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  .cell-white input:focus { outline: none; }
+  .cell-white.sel-row { background: var(--select-row); }
+  .cell-white.sel-word { background: var(--select-word); }
+  .cell-white.sel-active { background: #fff29a; }
+  .cell-white.cell-wrong, .cell-white.cell-empty { background: var(--attention-bg); }
+  .cell-white.cell-wrong input { color: var(--wrong); }
+  .cell-white.cell-correct input { color: var(--text); }
+  .cell-white.cell-win { background: #e9f7ec; }
+  .cell-white.cell-win input { color: var(--win); }
+
+  .defs-panel {
+    width: 100%;
+    max-width: 640px;
+    background: var(--panel-bg);
+    border-radius: 10px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    min-height: 3.2em;
+    margin-bottom: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    cursor: pointer;
+  }
+  .defs-panel:active { opacity: 0.8; }
+  .defs-label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .defs-text {
+    font-size: 1.05rem;
+    line-height: 1.35;
+  }
+  .ayuda-reminder {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .win-banner {
+    width: 100%;
+    max-width: 640px;
+    background: #e9f7ec;
+    border: 1px solid var(--win);
+    color: var(--accent-dark);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    text-align: center;
+    display: none;
+  }
+  .win-banner.show { display: block; }
+  .feedback-box {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--cell-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .feedback-box.show { display: block; }
+  .feedback-box p { margin: 0 0 10px; }
+  .hof-box {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .hof-box.show { display: block; }
+  .hof-box h2 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: 0.08em; }
+  .hof-box p { margin: 0 0 12px; font-size: 0.92rem; color: var(--muted); }
+  .hof-box .hof-enter {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 10px 26px;
+  }
+  .site-footer {
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+    margin: 18px 0 8px;
+    font-size: 0.85rem;
+  }
+  .site-footer a { color: var(--muted); text-decoration: none; }
+  .site-footer a:hover { text-decoration: underline; }
+  .feedback-link {
+    display: inline-block;
+    background: var(--accent);
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 10px 20px;
+  }
+  .feedback-link-inline { margin: 6px 0 0 4px; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 50;
+  }
+  .toast.show { opacity: 0.95; }
+  .siguiente-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%) translateY(12px);
+    width: calc(100% - 32px);
+    max-width: 420px;
+    background: var(--panel-bg);
+    color: var(--text);
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    padding: 14px 16px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .siguiente-toast.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+  }
+  .siguiente-toast p { margin: 0 26px 10px 0; font-size: 0.92rem; }
+  .siguiente-toast p a { color: var(--accent-dark); }
+  .siguiente-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17191a;
+      --panel-bg: #232626;
+      --text: #ecece7;
+      --muted: #9a9d99;
+      --cell-border: #444;
+      --grid-outer: #050505;
+      --select-row: #234a72;
+      --select-word: #2f6fb0;
+      --sel-active: #6b5c14;
+      --win: #4caf6a;
+    }
+    .cell-white { background: #fdfdfb; }
+    .cell-white input { color: #111; }
+    .win-banner { background: #163420; color: #bdeecb; }
+    .siguiente-toast p a { color: #7fd19f; }
+    .ia-note { background: #163420; color: #ffa94d; }
+  }
+</style>
+</head>
+<body>
+  <h1 id="titleEl">Crucigrama gamberro 008</h1>
+  <div class="ia-note">Pide ayuda a tu IA favorita (en caso de necesidad): clic en la definición para copiarla.</div>
+  <div class="save-note" id="saveNote">💾 Tu progreso se guarda solo — vuelve cuando quieras a <span id="saveNoteUrl"></span></div>
+
+  <div class="toolbar">
+    <div class="timer" id="timerEl">00:00</div>
+    <div class="buttons">
+      <button id="pauseBtn" type="button">Pausa</button>
+      <button id="checkBtn" type="button">Comprobar</button>
+      <button id="resetBtn" type="button">Reiniciar</button>
+      <button id="saveImgBtn" type="button">Guardar imagen</button>
+      <a id="opinionLink" class="btn-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Opina</a>
+    </div>
+  </div>
+
+  <div class="defs-panel">
+    <div class="defs-label" id="defsLabel">Definicion</div>
+    <div class="defs-text" id="defsText">Toca una casilla para empezar.</div>
+  </div>
+
+  <div class="grid-wrap">
+    <div class="grid" id="gridEl"></div>
+  </div>
+
+  <div class="win-banner" id="winBanner"></div>
+  <div class="hof-box" id="hofBox">
+    <h2>HALL OF FAME</h2>
+    <p>Solo quienes han resuelto un crucigrama llegan hasta aquí.</p>
+    <button type="button" class="hof-enter" id="hofEnter">ENTRAR</button>
+  </div>
+  <div class="feedback-box" id="feedbackBox">
+    <p>Espero que te haya gustado. Si quieres recibir otro como este, pulsa aquí.</p>
+    <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero recibir otro</a>
+  </div>
+
+  <div class="site-footer"><a href="https://recreo.zone/?ref=crucigrama">RECREO.ZONE</a></div>
+
+  <div class="toast" id="toastEl"></div>
+
+  <div class="siguiente-toast" id="siguienteToast">
+    <button class="siguiente-close" id="siguienteClose" type="button" aria-label="Cerrar">×</button>
+    <p>¿Te está gustando? Si quieres que te avise cuando haya otro, escríbeme a
+      <a href="mailto:crucigramas@recreo.zone">crucigramas@recreo.zone</a></p>
+    <a class="feedback-link" id="siguienteBtn"
+       href="mailto:crucigramas@recreo.zone?subject=Quiero%20el%20siguiente&body=Av%C3%ADsame%20cuando%20salga%20el%20pr%C3%B3ximo%20Crucigrama%20Gamberro."
+       target="_blank" rel="noopener">QUIERO EL SIGUIENTE</a>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = {"id": "cw_217717b30ddc", "name": "Crucigrama gamberro 008", "size": 12, "black": [[false, false, false, false, false, true, false, false, true, false, false, false], [false, false, true, false, false, true, false, false, false, false, false, false], [false, false, false, false, false, false, false, false, false, false, false, true], [false, false, false, false, true, false, false, false, false, false, true, false], [false, false, false, false, true, false, false, false, true, true, false, false], [false, true, false, false, false, false, false, false, true, false, false, false], [true, false, false, false, false, false, false, true, false, false, true, false], [false, false, true, false, true, false, true, false, false, false, false, false], [false, false, false, false, false, false, false, false, true, false, false, false], [false, false, false, false, true, false, false, false, false, false, true, false], [false, false, false, true, false, false, false, false, false, false, false, true], [false, false, false, false, false, true, false, false, false, false, false, false]], "solution": [["E", "T", "A", "P", "A", "", "A", "P", "", "D", "E", "L"], ["N", "I", "", "E", "N", "", "L", "A", "T", "I", "N", "A"], ["R", "E", "T", "R", "O", "A", "C", "T", "I", "V", "O", ""], ["A", "N", "O", "N", "", "N", "A", "R", "C", "O", "", "G"], ["S", "E", "M", "I", "", "I", "L", "I", "", "", "L", "L"], ["A", "", "A", "C", "E", "D", "I", "A", "", "A", "M", "O"], ["", "A", "D", "I", "D", "A", "S", "", "A", "L", "", "S"], ["S", "S", "", "O", "", "C", "", "L", "A", "I", "C", "A"], ["A", "C", "U", "S", "T", "I", "C", "A", "", "C", "A", "D"], ["L", "U", "S", "O", "", "O", "R", "I", "N", "A", "", "O"], ["S", "A", "E", "", "A", "N", "I", "C", "E", "T", "O", ""], ["A", "S", "N", "O", "S", "", "N", "O", "T", "A", "R", "A"]], "cellSegH": [["H1_0", "H1_0", "H1_0", "H1_0", "H1_0", null, "H1_1", "H1_1", null, "H1_2", "H1_2", "H1_2"], ["H2_0", "H2_0", null, "H2_1", "H2_1", null, "H2_2", "H2_2", "H2_2", "H2_2", "H2_2", "H2_2"], ["H3_0", "H3_0", "H3_0", "H3_0", "H3_0", "H3_0", "H3_0", "H3_0", "H3_0", "H3_0", "H3_0", null], ["H4_0", "H4_0", "H4_0", "H4_0", null, "H4_1", "H4_1", "H4_1", "H4_1", "H4_1", null, "H4_2"], ["H5_0", "H5_0", "H5_0", "H5_0", null, "H5_1", "H5_1", "H5_1", null, null, "H5_2", "H5_2"], ["H6_0", null, "H6_1", "H6_1", "H6_1", "H6_1", "H6_1", "H6_1", null, "H6_2", "H6_2", "H6_2"], [null, "H7_0", "H7_0", "H7_0", "H7_0", "H7_0", "H7_0", null, "H7_1", "H7_1", null, "H7_2"], ["H8_0", "H8_0", null, "H8_1", null, "H8_2", null, "H8_3", "H8_3", "H8_3", "H8_3", "H8_3"], ["H9_0", "H9_0", "H9_0", "H9_0", "H9_0", "H9_0", "H9_0", "H9_0", null, "H9_1", "H9_1", "H9_1"], ["H10_0", "H10_0", "H10_0", "H10_0", null, "H10_1", "H10_1", "H10_1", "H10_1", "H10_1", null, "H10_2"], ["H11_0", "H11_0", "H11_0", null, "H11_1", "H11_1", "H11_1", "H11_1", "H11_1", "H11_1", "H11_1", null], ["H12_0", "H12_0", "H12_0", "H12_0", "H12_0", null, "H12_1", "H12_1", "H12_1", "H12_1", "H12_1", "H12_1"]], "cellSegV": [["V1_0", "V2_0", "V3_0", "V4_0", "V5_0", null, "V7_0", "V8_0", null, "V10_0", "V11_0", "V12_0"], ["V1_0", "V2_0", null, "V4_0", "V5_0", null, "V7_0", "V8_0", "V9_0", "V10_0", "V11_0", "V12_0"], ["V1_0", "V2_0", "V3_1", "V4_0", "V5_0", "V6_0", "V7_0", "V8_0", "V9_0", "V10_0", "V11_0", null], ["V1_0", "V2_0", "V3_1", "V4_0", null, "V6_0", "V7_0", "V8_0", "V9_0", "V10_0", null, "V12_1"], ["V1_0", "V2_0", "V3_1", "V4_0", null, "V6_0", "V7_0", "V8_0", null, null, "V11_1", "V12_1"], ["V1_0", null, "V3_1", "V4_0", "V5_1", "V6_0", "V7_0", "V8_0", null, "V10_1", "V11_1", "V12_1"], [null, "V2_1", "V3_1", "V4_0", "V5_1", "V6_0", "V7_0", null, "V9_1", "V10_1", null, "V12_1"], ["V1_1", "V2_1", null, "V4_0", null, "V6_0", null, "V8_1", "V9_1", "V10_1", "V11_2", "V12_1"], ["V1_1", "V2_1", "V3_2", "V4_0", "V5_2", "V6_0", "V7_1", "V8_1", null, "V10_1", "V11_2", "V12_1"], ["V1_1", "V2_1", "V3_2", "V4_0", null, "V6_0", "V7_1", "V8_1", "V9_2", "V10_1", null, "V12_1"], ["V1_1", "V2_1", "V3_2", null, "V5_3", "V6_0", "V7_1", "V8_1", "V9_2", "V10_1", "V11_3", null], ["V1_1", "V2_1", "V3_2", "V4_1", "V5_3", null, "V7_1", "V8_1", "V9_2", "V10_1", "V11_3", "V12_2"]], "segments": {"H1_0": {"dir": "H", "label": "1", "cells": [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]], "clue": "Para ganar el Tour no te queda otra que ir una por una. Podría ser lo que cierra un tarro digital (si hubiera)"}, "H1_1": {"dir": "H", "label": "1", "cells": [[0, 6], [0, 7]], "clue": "Antecesora del PP. Fraga sabrá"}, "H1_2": {"dir": "H", "label": "1", "cells": [[0, 9], [0, 10], [0, 11]], "clue": "Contracción. Gramatical, no es que avise de un nuevo nacimiento"}, "H2_0": {"dir": "H", "label": "2", "cells": [[1, 0], [1, 1]], "clue": "Aunque  te choque, es el elemento más abundante en el aire"}, "H2_1": {"dir": "H", "label": "2", "cells": [[1, 3], [1, 4]], "clue": "Preposición en uso"}, "H2_2": {"dir": "H", "label": "2", "cells": [[1, 6], [1, 7], [1, 8], [1, 9], [1, 10], [1, 11]], "clue": "Música bailable con raíces africanas y caribeñas. Y algo de español tendrá"}, "H3_0": {"dir": "H", "label": "3", "cells": [[2, 0], [2, 1], [2, 2], [2, 3], [2, 4], [2, 5], [2, 6], [2, 7], [2, 8], [2, 9], [2, 10]], "clue": "Aunque el tiempo fuese en una sola dirección, este seguiría teniendo efecto en el pasado"}, "H4_0": {"dir": "H", "label": "4", "cells": [[3, 0], [3, 1], [3, 2], [3, 3]], "clue": "Fruta tropical que nunca probé ni vi. Podría ser un culo gordo"}, "H4_1": {"dir": "H", "label": "4", "cells": [[3, 5], [3, 6], [3, 7], [3, 8], [3, 9]], "clue": "Su tráfico es malo de verdad. Habría que atajarlo. Mala gente"}, "H4_2": {"dir": "H", "label": "4", "cells": [[3, 11]], "clue": "El punto feliz de las mujeres"}, "H5_0": {"dir": "H", "label": "5", "cells": [[4, 0], [4, 1], [4, 2], [4, 3]], "clue": "Blanca y en botella, incompleta"}, "H5_1": {"dir": "H", "label": "5", "cells": [[4, 5], [4, 6], [4, 7]], "clue": "Al periodista se le estropeó la A al escribir el nombre propio del luchador TOPURI"}, "H5_2": {"dir": "H", "label": "5", "cells": [[4, 10], [4, 11]], "clue": "Letra que desapareció del abecedario en 1994"}, "H6_0": {"dir": "H", "label": "6", "cells": [[5, 0]], "clue": "La que va delante de todas las demás"}, "H6_1": {"dir": "H", "label": "6", "cells": [[5, 2], [5, 3], [5, 4], [5, 5], [5, 6], [5, 7]], "clue": "Más delgada que un lenguado. Si te digo que hace días no come, no es canibal. Pescado"}, "H6_2": {"dir": "H", "label": "6", "cells": [[5, 9], [5, 10], [5, 11]], "clue": "El de las 50 sombras"}, "H7_0": {"dir": "H", "label": "7", "cells": [[6, 1], [6, 2], [6, 3], [6, 4], [6, 5], [6, 6]], "clue": "Una marca con tres bandas en diagonal, muy deportivas"}, "H7_1": {"dir": "H", "label": "7", "cells": [[6, 8], [6, 9]], "clue": "La otra contracción. Tampoco tiene que ver con un parto"}, "H7_2": {"dir": "H", "label": "7", "cells": [[6, 11]], "clue": "Si piensas en una serpiente, en su forma y el sonido que emite, ya diste con ella"}, "H8_0": {"dir": "H", "label": "8", "cells": [[7, 0], [7, 1]], "clue": "Dos serpientes gemelas"}, "H8_1": {"dir": "H", "label": "8", "cells": [[7, 3]], "clue": "Elipse hecha letra"}, "H8_2": {"dir": "H", "label": "8", "cells": [[7, 5]], "clue": "Algunos andaluces la pronuncian ese"}, "H8_3": {"dir": "H", "label": "8", "cells": [[7, 7], [7, 8], [7, 9], [7, 10], [7, 11]], "clue": "No religiosa, aunque crea"}, "H9_0": {"dir": "H", "label": "9", "cells": [[8, 0], [8, 1], [8, 2], [8, 3], [8, 4], [8, 5], [8, 6], [8, 7]], "clue": "De no ser clásica española, ni eléctrica, ¿cómo será? Si le quitas la T, es un niño delator"}, "H9_1": {"dir": "H", "label": "9", "cells": [[8, 9], [8, 10], [8, 11]], "clue": "Con ayuda de ordenadores, para diseñar de todo. Siglas en inglés, como casi todas."}, "H10_0": {"dir": "H", "label": "10", "cells": [[9, 0], [9, 1], [9, 2], [9, 3]], "clue": "Portugués, que suele dejarse engañar, si tiene una I delante"}, "H10_1": {"dir": "H", "label": "10", "cells": [[9, 5], [9, 6], [9, 7], [9, 8], [9, 9]], "clue": "El agüita amarilla. Desecho de humanidad"}, "H10_2": {"dir": "H", "label": "10", "cells": [[9, 11]], "clue": "Otra elipse letrada"}, "H11_0": {"dir": "H", "label": "11", "cells": [[10, 0], [10, 1], [10, 2]], "clue": "Para cambiar el aceite, fíjate bien en lo que va detrás: 5W-30, por ejemplo"}, "H11_1": {"dir": "H", "label": "11", "cells": [[10, 4], [10, 5], [10, 6], [10, 7], [10, 8], [10, 9], [10, 10]], "clue": "¿Por qué le quitarían la A para llamar a Alcalá-Zamora?"}, "H12_0": {"dir": "H", "label": "12", "cells": [[11, 0], [11, 1], [11, 2], [11, 3], [11, 4]], "clue": "No hablan: rebuznan"}, "H12_1": {"dir": "H", "label": "12", "cells": [[11, 6], [11, 7], [11, 8], [11, 9], [11, 10], [11, 11]], "clue": "Diésese cuenta. A la señora que da fe se le cayó una I"}, "V1_0": {"dir": "V", "label": "1", "cells": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]], "clue": "Llena hasta arriba"}, "V1_1": {"dir": "V", "label": "1", "cells": [[7, 0], [8, 0], [9, 0], [10, 0], [11, 0]], "clue": "Cubre y perfecciona los platos. Se baila en el Caribe"}, "V2_0": {"dir": "V", "label": "2", "cells": [[0, 1], [1, 1], [2, 1], [3, 1], [4, 1]], "clue": "Si es pasta, es que es rico"}, "V2_1": {"dir": "V", "label": "2", "cells": [[6, 1], [7, 1], [8, 1], [9, 1], [10, 1], [11, 1]], "clue": "Me tiene en estado de extrema curiosidad. Arden"}, "V3_0": {"dir": "V", "label": "3", "cells": [[0, 2]], "clue": "Postura de yoga que no sana"}, "V3_1": {"dir": "V", "label": "3", "cells": [[2, 2], [3, 2], [4, 2], [5, 2], [6, 2]], "clue": "Les piden que lo agarren. Si fuera una colina, sería una orden de conquistarla"}, "V3_2": {"dir": "V", "label": "3", "cells": [[8, 2], [9, 2], [10, 2], [11, 2]], "clue": "Se sirvan"}, "V4_0": {"dir": "V", "label": "4", "cells": [[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3], [6, 3], [7, 3], [8, 3], [9, 3]], "clue": "Siendo perjudicial, es grave"}, "V4_1": {"dir": "V", "label": "4", "cells": [[11, 3]], "clue": "Y aquí la tercera elipse letrada"}, "V5_0": {"dir": "V", "label": "5", "cells": [[0, 4], [1, 4], [2, 4]], "clue": "Orificio de salida de lo no deseado que entra por la boca"}, "V5_1": {"dir": "V", "label": "5", "cells": [[5, 4], [6, 4]], "clue": "De, pero del revés"}, "V5_2": {"dir": "V", "label": "5", "cells": [[8, 4]], "clue": "Trampa sin el plano inclinado"}, "V5_3": {"dir": "V", "label": "5", "cells": [[10, 4], [11, 4]], "clue": "En la manga de los tahúres"}, "V6_0": {"dir": "V", "label": "6", "cells": [[2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5]], "clue": "Acto por el que las aves construyen su morada"}, "V7_0": {"dir": "V", "label": "7", "cells": [[0, 6], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6]], "clue": "Disueltos en agua la convierten en básica, incluso en los laboratorios complutenses"}, "V7_1": {"dir": "V", "label": "7", "cells": [[8, 6], [9, 6], [10, 6], [11, 6]], "clue": "Pelambrera que el peluquero deja sin cortar. Si es equina. La pelambrera, no el peluquero"}, "V8_0": {"dir": "V", "label": "8", "cells": [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7], [5, 7]], "clue": "Tierra que se lleva en el alma. Si va de hijos, puedes ser privado de ella si lo haces mal"}, "V8_1": {"dir": "V", "label": "8", "cells": [[7, 7], [8, 7], [9, 7], [10, 7], [11, 7]], "clue": "Masculino de la que cree en H8"}, "V9_0": {"dir": "V", "label": "9", "cells": [[1, 8], [2, 8], [3, 8]], "clue": "Puede ser nervioso o generado por el reloj"}, "V9_1": {"dir": "V", "label": "9", "cells": [[6, 8], [7, 8]], "clue": "La primera doblada"}, "V9_2": {"dir": "V", "label": "9", "cells": [[9, 8], [10, 8], [11, 8]], "clue": "Pasó y tocó. Nada sexual"}, "V10_0": {"dir": "V", "label": "10", "cells": [[0, 9], [1, 9], [2, 9], [3, 9]], "clue": "Norma para la Luna, si la Luna fuese sol según Bellini. Brad o George"}, "V10_1": {"dir": "V", "label": "10", "cells": [[5, 9], [6, 9], [7, 9], [8, 9], [9, 9], [10, 9], [11, 9]], "clue": "Hasta el techo la recubre. Cocina y baño"}, "V11_0": {"dir": "V", "label": "11", "cells": [[0, 10], [1, 10], [2, 10]], "clue": "Sal que no sala, Y el apellido de Brian"}, "V11_1": {"dir": "V", "label": "11", "cells": [[4, 10], [5, 10]], "clue": "Cajetilla que cuyo contenido es perjudicial para su salud. Aunque podría ser Lo Mejor"}, "V11_2": {"dir": "V", "label": "11", "cells": [[7, 10], [8, 10]], "clue": "Repetido huele muy mal"}, "V11_3": {"dir": "V", "label": "11", "cells": [[10, 10], [11, 10]], "clue": "Operador booleano en inglés. Si fuese ornada, le quitarías nada"}, "V12_0": {"dir": "V", "label": "12", "cells": [[0, 11], [1, 11]], "clue": "Si la triplicas te queda el título de una ganadora de Eurovisión. Sí, hace unos años"}, "V12_1": {"dir": "V", "label": "12", "cells": [[3, 11], [4, 11], [5, 11], [6, 11], [7, 11], [8, 11], [9, 11]], "clue": "Explicado para resolver una complejidad escrita"}, "V12_2": {"dir": "V", "label": "12", "cells": [[11, 11]], "clue": "Comienza el abecedario"}}};
+  var N = DATA.size;
+  var STORAGE_KEY = "crossword_state_" + DATA.id;
+
+  // ---------- identificador de partida (ver "IDENTIFICACION DE PARTIDAS Y MEDICION DE REANUDACIONES") ----------
+  var ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  var CRUCIGRAMA_NUM = parseInt((DATA.name.match(/(\d+)\s*$/) || [0, "1"])[1], 10);
+
+  function crucigramaCodigo(numero) {
+    var n = numero - 1;
+    return ID_ALPHABET[Math.floor(n / 64)] + ID_ALPHABET[n % 64];
+  }
+
+  function randomPartidaCodigo() {
+    var bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    var out = "";
+    for (var i = 0; i < 6; i++) out += ID_ALPHABET[bytes[i] % 64];
+    return out;
+  }
+
+  var GAME_PREFIX = crucigramaCodigo(CRUCIGRAMA_NUM);
+
+  (function showSavedUrl() {
+    var canonical = document.querySelector('link[rel="canonical"]');
+    var urlEl = document.getElementById("saveNoteUrl");
+    if (canonical && urlEl) urlEl.textContent = canonical.href.replace(/^https?:\/\//, "");
+  })();
+
+  // ---------- estado ----------
+  var state = {
+    grid: [],           // NxN letras del usuario ("" = vacia)
+    selR: 0, selC: 0,
+    dir: "H",
+    checking: false,
+    started: false,
+    firstWordDone: false,
+    wordsDone: {},      // segId -> true, palabras ya contadas para GoatCounter
+    finished: false,
+    elapsedMs: 0,
+    finalElapsedMs: null,
+    paused: false,       // el jugador ha parado el tiempo a mano; se reanuda al escribir una letra
+    gameId: null         // identificador de partida (8 car.), ver documento de reanudaciones
+  };
+
+  for (var r = 0; r < N; r++) {
+    var row = [];
+    for (var c = 0; c < N; c++) row.push("");
+    state.grid.push(row);
+  }
+
+  // encuentra la primera casilla blanca para seleccion inicial
+  (function findFirstWhite() {
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (!DATA.black[r][c]) { state.selR = r; state.selC = c; return; }
+      }
+    }
+  })();
+
+  // ---------- persistencia ----------
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        grid: state.grid,
+        selR: state.selR, selC: state.selC, dir: state.dir,
+        started: state.started,
+        firstWordDone: state.firstWordDone,
+        wordsDone: state.wordsDone,
+        finished: state.finished,
+        elapsedMs: state.elapsedMs,
+        finalElapsedMs: state.finalElapsedMs,
+        paused: state.paused,
+        gameId: state.gameId
+      }));
+    } catch (e) { /* almacenamiento no disponible: se ignora */ }
+  }
+
+  function loadState() {
+    var raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { return; }
+    if (!raw) return;
+    var saved;
+    try { saved = JSON.parse(raw); } catch (e) { return; }
+    if (!saved || !saved.grid) return;
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (saved.grid[r] && typeof saved.grid[r][c] === "string") {
+          state.grid[r][c] = saved.grid[r][c];
+        }
+      }
+    }
+    if (typeof saved.selR === "number") state.selR = saved.selR;
+    if (typeof saved.selC === "number") state.selC = saved.selC;
+    if (saved.dir === "H" || saved.dir === "V") state.dir = saved.dir;
+    state.started = !!saved.started;
+    state.firstWordDone = !!saved.firstWordDone;
+    state.wordsDone = (saved.wordsDone && typeof saved.wordsDone === "object") ? saved.wordsDone : {};
+    state.finished = !!saved.finished;
+    state.elapsedMs = typeof saved.elapsedMs === "number" ? saved.elapsedMs : 0;
+    state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
+    state.paused = !!saved.paused && !state.finished;
+    state.gameId = (typeof saved.gameId === "string" && saved.gameId.length === 8) ? saved.gameId : null;
+  }
+
+  loadState();
+
+  // si ya habia una partida guardada y sin terminar, es una reanudacion;
+  // si no, se genera el identificador de la partida nueva (no hace falta
+  // guardarlo ya mismo: se persiste solo cuando saveState() se llame por
+  // una interaccion real, igual que el resto del estado)
+  if (state.gameId) {
+    if (state.started && !state.finished) {
+      gcEventPartida("-reanudado", "Partida reanudada");
+    }
+  } else {
+    state.gameId = GAME_PREFIX + randomPartidaCodigo();
+  }
+
+  // ---------- construccion del tablero ----------
+  var gridEl = document.getElementById("gridEl");
+  gridEl.style.gridTemplateColumns = "repeat(" + (N + 1) + ", 1fr)";
+  gridEl.style.gridTemplateRows = "repeat(" + (N + 1) + ", 1fr)";
+
+  var inputs = []; // inputs[r][c]
+
+  var corner = document.createElement("div");
+  corner.className = "hdr corner";
+  gridEl.appendChild(corner);
+  for (var c0 = 0; c0 < N; c0++) {
+    var colHdr = document.createElement("div");
+    colHdr.className = "hdr";
+    colHdr.textContent = String(c0 + 1);
+    gridEl.appendChild(colHdr);
+  }
+
+  for (var r0 = 0; r0 < N; r0++) {
+    var rowHdr = document.createElement("div");
+    rowHdr.className = "hdr";
+    rowHdr.textContent = String(r0 + 1);
+    gridEl.appendChild(rowHdr);
+
+    var inputRow = [];
+    for (var c1 = 0; c1 < N; c1++) {
+      if (DATA.black[r0][c1]) {
+        var blk = document.createElement("div");
+        blk.className = "cell-black";
+        gridEl.appendChild(blk);
+        inputRow.push(null);
+      } else {
+        var cellDiv = document.createElement("div");
+        cellDiv.className = "cell-white";
+        var inp = document.createElement("input");
+        inp.setAttribute("autocomplete", "off");
+        inp.setAttribute("autocapitalize", "characters");
+        inp.setAttribute("autocorrect", "off");
+        inp.setAttribute("spellcheck", "false");
+        inp.setAttribute("inputmode", "text");
+        inp.dataset.r = r0;
+        inp.dataset.c = c1;
+        if (state.grid[r0][c1]) inp.value = state.grid[r0][c1];
+        cellDiv.appendChild(inp);
+        gridEl.appendChild(cellDiv);
+        inputRow.push(inp);
+      }
+    }
+    inputs.push(inputRow);
+  }
+
+  function cellDivOf(r, c) { return inputs[r][c] ? inputs[r][c].parentElement : null; }
+
+  // ---------- segmentos ----------
+  function segIdFor(r, c, dir) {
+    return dir === "H" ? DATA.cellSegH[r][c] : DATA.cellSegV[r][c];
+  }
+  function segOf(id) { return DATA.segments[id]; }
+
+  function buildSegOrder(dirLetter) {
+    var ids = Object.keys(DATA.segments).filter(function (id) { return DATA.segments[id].dir === dirLetter; });
+    ids.sort(function (a, b) {
+      var pa = segOf(a).cells[0], pb = segOf(b).cells[0];
+      return dirLetter === "H" ? (pa[0] - pb[0] || pa[1] - pb[1]) : (pa[1] - pb[1] || pa[0] - pb[0]);
+    });
+    return ids;
+  }
+  var segOrderH = buildSegOrder("H");
+  var segOrderV = buildSegOrder("V");
+
+  function pickDirection(r, c, preferred) {
+    var hId = DATA.cellSegH[r][c], vId = DATA.cellSegV[r][c];
+    var hLen = hId ? segOf(hId).cells.length : 0;
+    var vLen = vId ? segOf(vId).cells.length : 0;
+    if (preferred === "H" && hLen > 1) return "H";
+    if (preferred === "V" && vLen > 1) return "V";
+    if (hLen > 1) return "H";
+    if (vLen > 1) return "V";
+    return preferred;
+  }
+
+  // ---------- seleccion / resaltado ----------
+  function clearHighlight() {
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var d = cellDivOf(r, c);
+        if (d) d.classList.remove("sel-row", "sel-word", "sel-active");
+      }
+    }
+  }
+
+  function applyHighlight() {
+    clearHighlight();
+    var segId = segIdFor(state.selR, state.selC, state.dir);
+    if (segId) {
+      var seg = segOf(segId);
+      seg.cells.forEach(function (rc) {
+        var d = cellDivOf(rc[0], rc[1]);
+        if (d) d.classList.add("sel-word");
+      });
+    }
+    var active = cellDivOf(state.selR, state.selC);
+    if (active) active.classList.add("sel-active");
+  }
+
+  var currentDefSeg = null;
+  var currentDefSegId = null;
+
+  // ---------- recordatorio contextual de ayuda IA ----------
+  // variables sueltas, no persistidas -- se reinician a mano en "Reiniciar"
+  var defsShownCount = 0;
+  var ayudaUsadaEstaPartida = false;
+  var recordatorioIaMostrado = false;
+
+  function updateDefs() {
+    var labelEl = document.getElementById("defsLabel");
+    var textEl = document.getElementById("defsText");
+    if (state.finished) {
+      currentDefSeg = null;
+      currentDefSegId = null;
+      labelEl.textContent = "¡Completado!";
+      textEl.textContent = "";
+      textEl.appendChild(document.createTextNode("¿Te ha gustado? "));
+      var link = document.createElement("a");
+      link.href = "https://forms.gle/uaAjqZdS5TLsL7Yt9";
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.className = "feedback-link feedback-link-inline";
+      link.textContent = "Quiero recibir otro";
+      textEl.appendChild(link);
+      return;
+    }
+    var segId = segIdFor(state.selR, state.selC, state.dir);
+    if (!segId) {
+      currentDefSeg = null;
+      currentDefSegId = null;
+      labelEl.textContent = "Definicion";
+      textEl.textContent = "Toca una casilla para empezar.";
+      return;
+    }
+    var seg = segOf(segId);
+    currentDefSeg = seg;
+    currentDefSegId = segId;
+    labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
+    textEl.textContent = seg.clue;
+
+    defsShownCount++;
+    var elegible = Object.keys(state.wordsDone).length >= 6;
+    if (elegible && !ayudaUsadaEstaPartida && defsShownCount % 5 === 0) {
+      if (!recordatorioIaMostrado) {
+        recordatorioIaMostrado = true;
+        gcEvent("-recordatorio-ia", "Recordatorio IA");
+      }
+      var reminder = document.createElement("span");
+      reminder.className = "ayuda-reminder";
+      reminder.textContent = "¿Necesitas una ayudita? Pídesela a la IA.";
+      textEl.appendChild(reminder);
+    }
+  }
+
+  function selectCell(r, c, preferredDir, force) {
+    state.selR = r; state.selC = c;
+    state.dir = force ? preferredDir : pickDirection(r, c, preferredDir || state.dir);
+    applyHighlight();
+    updateDefs();
+  }
+
+  // ---------- navegacion dentro de un tramo ----------
+  function neighborInSegment(r, c, dir, delta) {
+    var segId = segIdFor(r, c, dir);
+    if (!segId) return null;
+    var cells = segOf(segId).cells;
+    var idx = cells.findIndex(function (rc) { return rc[0] === r && rc[1] === c; });
+    var next = cells[idx + delta];
+    return next || null;
+  }
+
+  // cuando force es true, la direccion pedida se respeta aunque el tramo en
+  // esa direccion mida 1 sola casilla (p.ej. saltos de Tab o flechas)
+  var forcedDirForNextFocus = null;
+
+  function moveTo(r, c, preferredDir, force) {
+    if (!inputs[r] || !inputs[r][c]) return;
+    if (force) forcedDirForNextFocus = preferredDir;
+    inputs[r][c].focus();
+    selectCell(r, c, preferredDir, force);
+    forcedDirForNextFocus = null;
+  }
+
+  // ---------- comprobacion ----------
+  function isGridFull() {
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++)
+        if (!DATA.black[r][c] && !state.grid[r][c]) return false;
+    return true;
+  }
+
+  function isGridAllCorrect() {
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++)
+        if (!DATA.black[r][c] && state.grid[r][c] !== DATA.solution[r][c]) return false;
+    return true;
+  }
+
+  function isSegmentComplete(segId) {
+    if (!segId) return false;
+    return segOf(segId).cells.every(function (rc) {
+      return state.grid[rc[0]][rc[1]] === DATA.solution[rc[0]][rc[1]];
+    });
+  }
+
+  function clearCheckStyles() {
+    for (var r = 0; r < N; r++)
+      for (var c = 0; c < N; c++) {
+        var d = cellDivOf(r, c);
+        if (d) d.classList.remove("cell-wrong", "cell-empty", "cell-correct");
+      }
+  }
+
+  var checkBtn = document.getElementById("checkBtn");
+  var CHECK_LABEL_IDLE = "Comprobar";
+  var CHECK_LABEL_ACTIVE = "Volver a normal";
+
+  function enterCheckMode() {
+    state.checking = true;
+    checkBtn.classList.add("is-checking");
+    checkBtn.textContent = CHECK_LABEL_ACTIVE;
+  }
+
+  function exitCheckMode() {
+    state.checking = false;
+    checkBtn.classList.remove("is-checking");
+    checkBtn.textContent = CHECK_LABEL_IDLE;
+  }
+
+  function toggleCheck() {
+    if (state.finished) return;
+    var anyFilled = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
+    if (!anyFilled && !state.checking) {
+      showToast("Escribe alguna letra antes de comprobar.");
+      return;
+    }
+    if (state.checking) {
+      exitCheckMode();
+      clearCheckStyles();
+      return;
+    }
+    if (isGridFull() && isGridAllCorrect()) {
+      finishGame();
+      return;
+    }
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        var d = cellDivOf(r, c);
+        if (!d) continue;
+        if (!state.grid[r][c]) {
+          d.classList.add("cell-empty");
+        } else if (state.grid[r][c] !== DATA.solution[r][c]) {
+          d.classList.add("cell-wrong");
+        } else {
+          d.classList.add("cell-correct");
+        }
+      }
+    }
+    enterCheckMode();
+  }
+  checkBtn.addEventListener("click", toggleCheck);
+
+  document.getElementById("opinionLink").addEventListener("click", function () {
+    gcEvent("-opinion", "Opina");
+  });
+
+  // ---------- reinicio ----------
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!confirm("Esto borrara todo el progreso de esta partida. Continuar?")) return;
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        state.grid[r][c] = "";
+        if (inputs[r][c]) inputs[r][c].value = "";
+      }
+    }
+    state.finished = false;
+    state.elapsedMs = 0;
+    state.finalElapsedMs = null;
+    state.paused = false;
+    state.gameId = GAME_PREFIX + randomPartidaCodigo();
+    defsShownCount = 0;
+    ayudaUsadaEstaPartida = false;
+    recordatorioIaMostrado = false;
+    siguienteMostrado = false;
+    hideSiguiente();
+    hofRefresh();
+    exitCheckMode();
+    clearCheckStyles();
+    for (var r2 = 0; r2 < N; r2++) {
+      for (var c2 = 0; c2 < N; c2++) {
+        var d2 = cellDivOf(r2, c2);
+        if (d2) d2.classList.remove("cell-win");
+      }
+    }
+    document.getElementById("saveImgBtn").style.display = "none";
+    document.getElementById("winBanner").classList.remove("show");
+    document.getElementById("feedbackBox").classList.remove("show");
+    pauseTimer();
+    renderTimer(0);
+    pauseBtn.style.display = "";
+    updatePauseUI();
+    saveState();
+    selectCell(state.selR, state.selC, state.dir);
+  });
+
+  // ---------- temporizador ----------
+  var timerEl = document.getElementById("timerEl");
+  var timerActive = false;
+  var resumeAt = null;
+  var tickHandle = null;
+
+  function renderTimer(ms) {
+    var totalSec = Math.floor(ms / 1000);
+    var mm = Math.floor(totalSec / 60);
+    var ss = totalSec % 60;
+    var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+    timerEl.textContent = pad(mm) + ":" + pad(ss);
+  }
+
+  function tick() {
+    renderTimer(state.elapsedMs + (Date.now() - resumeAt));
+  }
+
+  function ensureTimerRunning() {
+    if (state.finished || state.paused || timerActive) return;
+    timerActive = true;
+    resumeAt = Date.now();
+    tickHandle = setInterval(tick, 250);
+  }
+
+  // ---------- pausa manual del tiempo ----------
+  var pauseBtn = document.getElementById("pauseBtn");
+
+  function updatePauseUI() {
+    pauseBtn.textContent = state.paused ? "Reanudar" : "Pausa";
+    pauseBtn.classList.toggle("is-paused", state.paused);
+    timerEl.classList.toggle("paused", state.paused);
+  }
+
+  function setPaused(flag) {
+    if (state.finished) return;
+    if (state.paused === flag) return;
+    state.paused = flag;
+    if (flag) {
+      pauseTimer();
+    } else if (state.grid.some(function (row) { return row.some(function (v) { return v; }); })) {
+      ensureTimerRunning();
+    }
+    updatePauseUI();
+    saveState();
+  }
+
+  pauseBtn.addEventListener("click", function () { setPaused(!state.paused); });
+
+  function pauseTimer() {
+    if (!timerActive) return;
+    state.elapsedMs += Date.now() - resumeAt;
+    timerActive = false;
+    clearInterval(tickHandle);
+  }
+
+  window.addEventListener("visibilitychange", function () {
+    if (document.hidden) { pauseTimer(); saveState(); }
+    else if (!state.finished && state.grid.some(function (row) { return row.some(function (v) { return v; }); })) {
+      ensureTimerRunning();
+    }
+  });
+  window.addEventListener("pagehide", function () { pauseTimer(); saveState(); });
+
+  // ---------- foto de la cuadricula al abandonar ----------
+  // ojo: no nos quedamos bloqueados tras el primer envio -- en movil es
+  // habitual perder el foco un instante (cambiar de app, mirar una
+  // notificacion) y volver enseguida; si bloqueasemos aqui para siempre,
+  // ese primer vistazo perdido -- casi siempre justo tras la primera
+  // palabra -- se quedaria fijado como "abandono" aunque la persona
+  // siguiera jugando despues. Por eso reenviamos cada vez que la
+  // cuadricula cambia desde el ultimo envio.
+  //
+  // la foto va codificada en el PATH, no en el titulo: GoatCounter guarda
+  // el titulo una vez por path (compartido entre todos los hits a esa
+  // misma ruta), no uno distinto por cada golpe -- si lo pusieramos en el
+  // titulo, todos los abandonos de un mismo crucigrama se verian siempre
+  // con el titulo del primero que se registro, por mucho que cada uno
+  // mandara un valor distinto. El path si se guarda integro por cada hit.
+  var lastAbandonSnapshot = null;
+  function buildGridSnapshot() {
+    // solo casillas jugables (blancas): el patron de negras ya es un dato
+    // publico del propio crucigrama, no hace falta repetirlo aqui.
+    var out = "";
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        out += state.grid[r][c] || "_";
+      }
+    }
+    return out;
+  }
+  function reportAbandon() {
+    if (state.finished || !state.started) return;
+    var snap = buildGridSnapshot();
+    if (snap === lastAbandonSnapshot) return;
+    lastAbandonSnapshot = snap;
+    if (window.goatcounter && window.goatcounter.count) {
+      var base = location.pathname.replace(/\/$/, "") + (state.gameId ? "-" + state.gameId : "");
+      // evento simple, para ver de un vistazo el recuento total en el panel
+      window.goatcounter.count({ path: base + "-abandona", event: true });
+      // evento con la foto de la cuadricula codificada en el path
+      window.goatcounter.count({
+        path: base + "-abandona-datos-" + snap,
+        title: "Foto de cuadricula al abandonar",
+        event: true,
+      });
+    }
+  }
+  window.addEventListener("pagehide", reportAbandon);
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") reportAbandon();
+  });
+
+  // ---------- Hall of Fame: acceso desde la partida completada ----------
+  // Interruptor general. Solo true si el formulario real de Google esta
+  // conectado en hall-of-fame.html (lo esta desde el lanzamiento). Solo
+  // crucigramas 002 en adelante.
+  var HOF_LIVE = true;
+  var HOF_ENABLED = HOF_LIVE && CRUCIGRAMA_NUM >= 2;
+  var hofBox = document.getElementById("hofBox");
+
+  function hofCrosswordId() {
+    var s = "" + CRUCIGRAMA_NUM;
+    while (s.length < 3) s = "0" + s;
+    return s;
+  }
+
+  function hofIsPublished(gameId) {
+    try { return localStorage.getItem("hof_pub_" + gameId) === "1"; } catch (e) { return false; }
+  }
+
+  // el derecho a mostrar ENTRAR sale de la partida completada guardada, no de sessionStorage
+  function hofRefresh() {
+    var show = HOF_ENABLED && state.finished && !!state.gameId && !hofIsPublished(state.gameId);
+    hofBox.classList.toggle("show", show);
+  }
+
+  document.getElementById("hofEnter").addEventListener("click", function () {
+    var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
+    var claim = {
+      crossword_id: hofCrosswordId(),
+      archivo: location.pathname.split("/").pop(),
+      game_id: state.gameId,
+      tiempo_s: Math.floor(ms / 1000)
+    };
+    try { sessionStorage.setItem("hof_claim", JSON.stringify(claim)); } catch (e) { /* sin sessionStorage: solo vista publica */ }
+    var go = function () { location.href = "/hall-of-fame.html?crossword=" + claim.crossword_id; };
+    // el evento tiene que salir antes de abandonar la pagina
+    var tries = 0;
+    (function attempt() {
+      if (window.goatcounter && window.goatcounter.count) { gcEventPartida("-hof-entrada", "Hall of Fame: entrada"); go(); return; }
+      if (++tries > 10) { go(); return; }
+      setTimeout(attempt, 100);
+    })();
+  });
+
+  // ---------- victoria ----------
+  function finishGame() {
+    var isNewCompletion = !state.finished;
+    pauseTimer();
+    state.paused = false;
+    pauseBtn.style.display = "none";
+    timerEl.classList.remove("paused");
+    state.finished = true;
+    state.finalElapsedMs = state.elapsedMs;
+    renderTimer(state.finalElapsedMs);
+    clearCheckStyles();
+    updateDefs();
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var d = cellDivOf(r, c);
+        if (d) d.classList.add("cell-win");
+      }
+    }
+    exitCheckMode();
+    var totalSec = Math.floor(state.finalElapsedMs / 1000);
+    var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
+    var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+    var banner = document.getElementById("winBanner");
+    banner.textContent = "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
+    banner.classList.add("show");
+    document.getElementById("saveImgBtn").style.display = "inline-block";
+    document.getElementById("feedbackBox").classList.add("show");
+    saveState();
+    hofRefresh();
+    if (isNewCompletion) {
+      // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
+      // GoatCounter guarda un unico titulo por path, asi que en el titulo no serviria
+      gcEventPartida("-completado-" + Math.floor(state.finalElapsedMs / 1000), "Crucigrama completado");
+    }
+  }
+
+  // ---------- exportar imagen ----------
+  document.getElementById("saveImgBtn").addEventListener("click", function () {
+    var cell = 34, pad = 30;
+    var w = pad + N * cell, h = pad + N * cell;
+    var canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 13px sans-serif";
+    ctx.fillStyle = "#555555";
+    for (var i = 0; i < N; i++) {
+      ctx.fillText(String(i + 1), pad + i * cell + cell / 2, pad / 2);
+      ctx.fillText(String(i + 1), pad / 2, pad + i * cell + cell / 2);
+    }
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        var x = pad + c * cell, y = pad + r * cell;
+        if (DATA.black[r][c]) {
+          ctx.fillStyle = "#111111";
+          ctx.fillRect(x, y, cell, cell);
+        } else {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(x, y, cell, cell);
+          ctx.strokeStyle = "#bbbbbb";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+          ctx.fillStyle = "#2f8f3f";
+          ctx.font = "bold 18px sans-serif";
+          ctx.fillText(state.grid[r][c] || "", x + cell / 2, y + cell / 2 + 1);
+        }
+      }
+    }
+    canvas.toBlob(function (blob) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      var safeName = DATA.name.replace(/[^a-z0-9]+/gi, "_");
+      a.href = url;
+      a.download = safeName + "_resuelto.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    });
+  });
+
+  // ---------- toast ----------
+  var toastEl = document.getElementById("toastEl");
+  var toastTimeout = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
+  }
+
+  // ---------- aviso "quiero el siguiente" (35% de casillas rellenadas) ----------
+  // variable suelta, no persistida -- se reinicia en "Reiniciar"
+  var siguienteMostrado = false;
+  var siguienteToastEl = document.getElementById("siguienteToast");
+  var siguienteTimeout = null;
+
+  function hideSiguiente() {
+    clearTimeout(siguienteTimeout);
+    siguienteToastEl.classList.remove("show");
+  }
+
+  function checkSiguienteAviso() {
+    if (siguienteMostrado || state.finished) return;
+    var total = 0, rellenas = 0;
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        total++;
+        if (state.grid[r][c]) rellenas++;
+      }
+    }
+    if (total === 0 || rellenas / total < 0.35) return;
+    siguienteMostrado = true;
+    gcEvent("-aviso-siguiente", "Aviso siguiente");
+    siguienteToastEl.classList.add("show");
+    clearTimeout(siguienteTimeout);
+    siguienteTimeout = setTimeout(hideSiguiente, 15000);
+  }
+
+  document.getElementById("siguienteClose").addEventListener("click", hideSiguiente);
+  document.getElementById("siguienteBtn").addEventListener("click", function () {
+    gcEvent("-quiero-siguiente", "Quiero el siguiente");
+  });
+
+  // ---------- eventos de GoatCounter (con reintento por si count.js aun no ha cargado) ----------
+  function gcEvent(suffix, title, triesLeft) {
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({
+        path: location.pathname.replace(/\/$/, "") + suffix,
+        title: title,
+        event: true,
+      });
+      return;
+    }
+    triesLeft = triesLeft === undefined ? 10 : triesLeft;
+    if (triesLeft <= 0) return;
+    setTimeout(function () { gcEvent(suffix, title, triesLeft - 1); }, 200);
+  }
+
+  // variante que antepone el identificador de partida, para los eventos
+  // del ciclo de la partida que se quieren poder correlacionar entre visitas
+  function gcEventPartida(suffix, title, triesLeft) {
+    gcEvent("-" + state.gameId + suffix, title, triesLeft);
+  }
+
+  // ---------- copiar definicion al portapapeles ----------
+  document.querySelector(".defs-panel").addEventListener("click", function () {
+    if (!currentDefSeg) return;
+    ayudaUsadaEstaPartida = true;
+    gcEvent("-ayuda-" + currentDefSegId, "Ayuda IA " + currentDefSegId);
+    var preamble = "Voy a darte una definición de un crucigrama. Échame una mano sin revelarme la solución.";
+    var text = preamble + "\n\n" + currentDefSeg.clue + " (número de letras: " + currentDefSeg.cells.length + ")";
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      showToast("No se pudo copiar");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(function () {
+      showToast("Copiado ✓");
+    }).catch(function () {
+      showToast("No se pudo copiar");
+    });
+  });
+
+  // ---------- eventos de casillas ----------
+  for (var r2 = 0; r2 < N; r2++) {
+    for (var c2 = 0; c2 < N; c2++) {
+      (function (r, c) {
+        var inp = inputs[r][c];
+        if (!inp) return;
+
+        // evita el menu de Copiar/Pegar/Buscar que iOS muestra al seleccionar texto
+        inp.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+        inp.addEventListener("pointerdown", function () {
+          if (document.activeElement === inp && state.selR === r && state.selC === c) {
+            var other = state.dir === "H" ? "V" : "H";
+            var segId = segIdFor(r, c, other);
+            if (segId) {
+              state.dir = other;
+              applyHighlight();
+              updateDefs();
+            }
+          }
+        });
+
+        inp.addEventListener("focus", function () {
+          if (forcedDirForNextFocus) {
+            selectCell(r, c, forcedDirForNextFocus, true);
+          } else {
+            selectCell(r, c, state.dir);
+          }
+          inp.select();
+          if (window.innerWidth < 700) {
+            setTimeout(function () {
+              inp.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+            }, 100);
+          }
+        });
+
+        inp.addEventListener("input", function () {
+          var raw = inp.value.replace(/[^A-Za-zÑñ]/g, "");
+          var letter = raw.slice(-1).toUpperCase();
+          inp.value = letter;
+          state.grid[r][c] = letter;
+
+          if (state.checking) {
+            exitCheckMode();
+            clearCheckStyles();
+          }
+
+          if (letter) {
+            if (state.paused) setPaused(false);
+            var hasAny = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
+            if (hasAny) ensureTimerRunning();
+            if (!state.started) {
+              state.started = true;
+              gcEventPartida("-empezado", "Crucigrama empezado");
+            }
+            (function () {
+              var hSeg = DATA.cellSegH[r][c], vSeg = DATA.cellSegV[r][c];
+              [hSeg, vSeg].forEach(function (segId) {
+                if (!segId || state.wordsDone[segId] || !isSegmentComplete(segId)) return;
+                state.wordsDone[segId] = true;
+                if (!state.firstWordDone) {
+                  state.firstWordDone = true;
+                  gcEventPartida("-primera_palabra", "Primera palabra resuelta");
+                }
+                gcEventPartida("-palabra-" + segId, "Palabra resuelta " + segId);
+              });
+            })();
+            var next = neighborInSegment(r, c, state.dir, 1);
+            if (next) moveTo(next[0], next[1], state.dir);
+          }
+
+          saveState();
+          checkSiguienteAviso();
+
+          if (isGridFull() && isGridAllCorrect()) {
+            finishGame();
+          }
+        });
+
+        inp.addEventListener("keydown", function (e) {
+          if (state.finished) return;
+          switch (e.key) {
+            case "Backspace": {
+              e.preventDefault();
+              if (state.checking) {
+                exitCheckMode(); clearCheckStyles();
+              }
+              if (state.grid[r][c]) {
+                state.grid[r][c] = "";
+                inp.value = "";
+                saveState();
+              } else {
+                var prev = neighborInSegment(r, c, state.dir, -1);
+                if (prev) {
+                  state.grid[prev[0]][prev[1]] = "";
+                  if (inputs[prev[0]][prev[1]]) inputs[prev[0]][prev[1]].value = "";
+                  moveTo(prev[0], prev[1], state.dir);
+                  saveState();
+                }
+              }
+              break;
+            }
+            case "Delete": {
+              e.preventDefault();
+              state.grid[r][c] = "";
+              inp.value = "";
+              saveState();
+              break;
+            }
+            case "Tab": {
+              e.preventDefault();
+              var order = state.dir === "H" ? segOrderH : segOrderV;
+              var curId = segIdFor(r, c, state.dir);
+              var idx = order.indexOf(curId);
+              var delta = e.shiftKey ? -1 : 1;
+              var nextIdx = (idx + delta + order.length) % order.length;
+              var nextSeg = segOf(order[nextIdx]);
+              var target = nextSeg.cells[0];
+              moveTo(target[0], target[1], state.dir, true);
+              break;
+            }
+            case "ArrowLeft": case "ArrowRight": case "ArrowUp": case "ArrowDown": {
+              e.preventDefault();
+              var dir = (e.key === "ArrowLeft" || e.key === "ArrowRight") ? "H" : "V";
+              var delta = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1 : -1;
+              var nr = r + (dir === "V" ? delta : 0);
+              var nc = c + (dir === "H" ? delta : 0);
+              if (nr >= 0 && nr < N && nc >= 0 && nc < N && inputs[nr][nc]) {
+                moveTo(nr, nc, dir, true);
+              }
+              break;
+            }
+          }
+        });
+      })(r2, c2);
+    }
+  }
+
+  // ---------- estado inicial al cargar ----------
+  (function initFromLoadedState() {
+    var hasAny = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
+    if (state.finished) {
+      finishGame();
+    } else if (hasAny) {
+      ensureTimerRunning();
+    }
+    updatePauseUI();
+    renderTimer(state.elapsedMs);
+    selectCell(state.selR, state.selC, state.dir);
+  })();
+
+})();
+</script>
+</body>
+</html>
