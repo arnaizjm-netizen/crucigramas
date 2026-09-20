@@ -457,7 +457,8 @@
     elapsedMs: 0,
     finalElapsedMs: null,
     paused: false,       // el jugador ha parado el tiempo a mano; se reanuda al escribir una letra
-    gameId: null         // identificador de partida (8 car.), ver documento de reanudaciones
+    gameId: null,        // identificador de partida (8 car.), ver documento de reanudaciones
+    autoCheckDone: false // el comprobar automatico (cuadricula llena con errores) ya salto en esta partida
   };
 
   for (var r = 0; r < N; r++) {
@@ -488,7 +489,8 @@
         elapsedMs: state.elapsedMs,
         finalElapsedMs: state.finalElapsedMs,
         paused: state.paused,
-        gameId: state.gameId
+        gameId: state.gameId,
+        autoCheckDone: state.autoCheckDone
       }));
     } catch (e) { /* almacenamiento no disponible: se ignora */ }
   }
@@ -518,6 +520,7 @@
     state.finalElapsedMs = typeof saved.finalElapsedMs === "number" ? saved.finalElapsedMs : null;
     state.paused = !!saved.paused && !state.finished;
     state.gameId = (typeof saved.gameId === "string" && saved.gameId.length === 8) ? saved.gameId : null;
+    state.autoCheckDone = !!saved.autoCheckDone;
   }
 
   loadState();
@@ -797,15 +800,16 @@
     enterCheckMode();
   }
 
-  // cuadricula llena pero con errores: salta solo a modo comprobar (el aviso, solo la primera vez)
-  var avisoLlenoMostrado = false;
+  // Comprobar automatico: SOLO la primera vez que la cuadricula pasa de incompleta a llena y hay
+  // errores (una vez por partida). Despues el jugador pulsa Comprobar cuando quiera; la
+  // finalizacion, en cambio, se detecta siempre sola (ver el manejador de entrada de letras).
   function autoComprobar() {
+    if (state.autoCheckDone) return;
+    state.autoCheckDone = true;
     markCheck();
     checkBtn.classList.add("attn");
-    if (!avisoLlenoMostrado) {
-      avisoLlenoMostrado = true;
-      showToast("Todas las casillas están llenas, pero hay errores. Las marcadas en naranja no son correctas.", 5000);
-    }
+    showToast("Todas las casillas están llenas, pero hay errores. Las marcadas en naranja no son correctas.", 5000);
+    saveState();
   }
 
   function toggleCheck() {
@@ -849,7 +853,7 @@
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
     recordatorioIaMostrado = false;
-    avisoLlenoMostrado = false;
+    state.autoCheckDone = false;
     siguienteMostrado = false;
     hideSiguiente();
     checkBtn.style.display = "";
@@ -1364,8 +1368,10 @@
     var hasAny = state.grid.some(function (row) { return row.some(function (v) { return v; }); });
     if (state.finished) {
       finishGame();
-    } else if (hasAny) {
-      ensureTimerRunning();
+    } else {
+      // partida guardada ya con la cuadricula llena: el momento del aviso automatico ya paso
+      if (isGridFull()) state.autoCheckDone = true;
+      if (hasAny) ensureTimerRunning();
     }
     updatePauseUI();
     renderTimer(state.elapsedMs);
