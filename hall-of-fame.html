@@ -64,7 +64,17 @@
     padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
     background: var(--bg); color: var(--text); width: 9em;
   }
-  #honorInput { width: 12em; }
+  /* respuesta HONOR: una casilla por letra, como en un crucigrama gamberro */
+  #honorForm { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
+  .honor-cells { display: inline-flex; }
+  .honor-cells input {
+    width: 46px; height: 46px; padding: 0; margin: 0 0 0 -1px;
+    border: 1px solid #b8b8b8; border-radius: 0; background: #fdfdfb; color: #111;
+    text-align: center; text-transform: uppercase; letter-spacing: 0; font-weight: 700; font-size: 1.4rem;
+    caret-color: transparent;
+  }
+  .honor-cells input:first-child { margin-left: 0; }
+  .honor-cells input:focus { outline: none; background: #fff29a; position: relative; z-index: 1; border-color: var(--accent); }
   button, .btn {
     font: inherit; font-weight: 700; letter-spacing: 0.03em;
     border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer;
@@ -128,7 +138,7 @@
       <p>¿Quieres poner tus iniciales en el Hall of Fame?</p>
       <p class="clue">Principio que induce a un humano a actuar con rectitud y dignidad. Y a no hacer trampas en el Hall of Fame.</p>
       <form id="honorForm" autocomplete="off">
-        <input type="text" id="honorInput" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" aria-label="Respuesta">
+        <div class="honor-cells" id="honorCells" role="group" aria-label="Respuesta"></div>
         <button type="submit">OK</button>
       </form>
       <p class="msg" id="honorMsg" role="status"></p>
@@ -491,9 +501,44 @@ function hofSetupPublish(cw) {
   hofShowStage("stageHonor");
   var honorDone = false;
 
+  // una casilla por letra de la respuesta; el cursor arranca en la primera
+  var cells = [];
+  for (var i = 0; i < HONOR_RESPUESTA.length; i++) {
+    var c = document.createElement("input");
+    c.type = "text"; c.maxLength = 1;
+    c.setAttribute("autocomplete", "off"); c.setAttribute("autocapitalize", "characters");
+    c.setAttribute("autocorrect", "off"); c.setAttribute("spellcheck", "false");
+    c.setAttribute("aria-label", "Letra " + (i + 1) + " de " + HONOR_RESPUESTA.length);
+    $("honorCells").appendChild(c);
+    cells.push(c);
+  }
+  function honorValue() { return cells.map(function (x) { return x.value; }).join(""); }
+  function honorFocus(i) { if (cells[i]) { cells[i].focus(); cells[i].select(); } }
+  cells.forEach(function (c, i) {
+    c.addEventListener("focus", function () { c.select(); });
+    c.addEventListener("input", function () {
+      var v = c.value.toUpperCase().replace(/[^A-ZÑ]/g, "");
+      c.value = v.slice(-1);                       // si escribe sobre una casilla llena, manda la ultima letra
+      if (c.value && i < cells.length - 1) honorFocus(i + 1);
+    });
+    c.addEventListener("keydown", function (ev) {
+      if (ev.key === "Backspace" && !c.value && i > 0) { ev.preventDefault(); cells[i - 1].value = ""; honorFocus(i - 1); }
+      else if (ev.key === "ArrowLeft" && i > 0) { ev.preventDefault(); honorFocus(i - 1); }
+      else if (ev.key === "ArrowRight" && i < cells.length - 1) { ev.preventDefault(); honorFocus(i + 1); }
+    });
+    c.addEventListener("paste", function (ev) {
+      var t = ((ev.clipboardData || window.clipboardData).getData("text") || "").toUpperCase().replace(/[^A-ZÑ]/g, "");
+      if (!t) return;
+      ev.preventDefault();
+      for (var k = 0; k < t.length && i + k < cells.length; k++) cells[i + k].value = t.charAt(k);
+      honorFocus(Math.min(i + t.length, cells.length - 1));
+    });
+  });
+  honorFocus(0);
+
   $("honorForm").addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var v = $("honorInput").value.trim().toUpperCase();
+    var v = honorValue();
     if (v !== HONOR_RESPUESTA) { $("honorMsg").textContent = "Esa no es."; return; }
     $("honorMsg").textContent = "";
     if (!honorDone) { honorDone = true; hofEvent("-hof-honor-resuelto", "Hall of Fame: HONOR resuelto"); }

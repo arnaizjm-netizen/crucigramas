@@ -96,7 +96,11 @@
   @media (min-width: 700px) {
     .previous-list { flex-direction: row; justify-content: center; }
   }
-  .prev-item { margin: 0; text-align: center; width: 210px; max-width: 100%; }
+  .prev-item { margin: 0; text-align: center; }
+  .prev-item img { max-width: 160px; height: auto; border-radius: 4px; }
+  .prev-item figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
+  /* solo el mas reciente de los anteriores se puede jugar desde la portada */
+  .prev-item-play { width: 210px; max-width: 100%; }
   /* tarjeta-boton: miniatura + barra verde "JUGAR" pegada abajo; se ve y se siente clicable */
   .prev-link {
     display: block;
@@ -210,27 +214,21 @@
       <h2>Crucigramas gamberros online gratuitos, publicados de vez en cuando</h2>
       <p class="previous-sub">Cada Crucigrama Gamberro es distinto — mismo espíritu, pistas nuevas.</p>
       <div class="previous-list">
-      <div class="prev-item">
+      <div class="prev-item prev-item-play">
         <a class="prev-link" href="CRUCIGRAMA_GAMBERRO_006.html?ref=home" data-num="006">
           <img src="miniaturas/miniatura_006.png" alt="Crucigrama Gamberro 006 (cuadricula vacia)" loading="lazy">
           <span class="prev-num">Nº 006</span>
           <span class="prev-cta">JUGAR &rarr;</span>
         </a>
       </div>
-      <div class="prev-item">
-        <a class="prev-link" href="Crucigrama_Gamberro_005.html?ref=home" data-num="005">
-          <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
-          <span class="prev-num">Nº 005</span>
-          <span class="prev-cta">JUGAR &rarr;</span>
-        </a>
-      </div>
-      <div class="prev-item">
-        <a class="prev-link" href="Crucigrama_gamberro_004.html?ref=home" data-num="004">
-          <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
-          <span class="prev-num">Nº 004</span>
-          <span class="prev-cta">JUGAR &rarr;</span>
-        </a>
-      </div>
+      <figure class="prev-item">
+        <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
+        <figcaption>Nº 005</figcaption>
+      </figure>
+      <figure class="prev-item">
+        <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
+        <figcaption>Nº 004</figcaption>
+      </figure>
       </div>
     </section>
 
