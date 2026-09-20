@@ -185,7 +185,10 @@ var HONOR_RESPUESTA = "HONOR";
    codigo (no viene de la hoja, no cuenta como jugador en la galeria) y "AUTOR" no se puede usar como
    iniciales. Un crucigrama que no aparezca aqui no lleva fila de autor (el 006 ya tiene su primero). */
 var AUTOR_INICIALES = "AUTOR";
-var AUTOR_TIEMPOS = { "002": 176, "003": 184, "004": 179, "005": 187 };
+var AUTOR_TIEMPOS = { "002": 176, "003": 184, "004": 179, "005": 187, "006": 181 };
+/* Por defecto el autor va el primero. Si aqui figura una marca temporal, va donde le toca por llegada
+   (detras de los que ya estaban y delante de los que lleguen despues): el 006 ya tenia un primero. */
+var AUTOR_MARCAS = { "006": "20/09/2026 5:35:05" };
 
 /* Crucigramas con Hall of Fame (002 en adelante); lo genera generate_homepage.py */
 var CROSSWORDS = [{"num": "002", "name": "Crucigrama Gamberro 002", "archivo": "Crucigrama_Gamberro_002.html", "casillas": 120, "storage_key": "crossword_state_cw_3dc0acd50e52", "miniatura": "miniaturas/hof/hof_002.png"}, {"num": "003", "name": "Crucigrama Gamberro 003", "archivo": "Crucigrama_gamberro_003.html", "casillas": 119, "storage_key": "crossword_state_cw_e3b69d6ff018", "miniatura": "miniaturas/hof/hof_003.png"}, {"num": "004", "name": "Crucigrama Gamberro 004", "archivo": "Crucigrama_gamberro_004.html", "casillas": 119, "storage_key": "crossword_state_cw_5bbe027f61ef", "miniatura": "miniaturas/hof/hof_004.png"}, {"num": "005", "name": "Crucigrama Gamberro 005", "archivo": "Crucigrama_Gamberro_005.html", "casillas": 120, "storage_key": "crossword_state_cw_19934509fd06", "miniatura": "miniaturas/hof/hof_005.png"}, {"num": "006", "name": "Crucigrama Gamberro 006", "archivo": "CRUCIGRAMA_GAMBERRO_006.html", "casillas": 117, "storage_key": "crossword_state_cw_52cb41a0a981", "miniatura": "miniaturas/hof/hof_006.png"}];
@@ -382,6 +385,11 @@ async function hofValidRows(rawRows, cw) {
 /* Orden de llegada: por la "Marca temporal" de la hoja (la pone Google); las filas sin hora
    (recien enviadas, o sin marca) van al final, en el orden en que llegaron. Sin empates. */
 function hofRank(rows, cw) {
+  var tAutor = cw && AUTOR_TIEMPOS[cw.num];
+  var mAutor = cw && AUTOR_MARCAS[cw.num];
+  if (tAutor && mAutor) {   // el autor entra en el orden de llegada, como una fila mas
+    rows = rows.concat([{ game_id: "", iniciales: AUTOR_INICIALES, tiempo_s: tAutor, marca: mAutor, isAutor: true }]);
+  }
   var items = rows.map(function (r, i) {
     var m = hofParseMarca(r.marca);
     return { r: r, i: i, ts: m.ts === null ? Infinity : m.ts, fecha: m.fecha };
@@ -392,10 +400,9 @@ function hofRank(rows, cw) {
   });
   var list = items.map(function (x) {
     return { game_id: x.r.game_id, iniciales: x.r.iniciales, tiempo_s: x.r.tiempo_s,
-             fecha: x.fecha, isYou: hofIsPublished(x.r.game_id), isAutor: false };
+             fecha: x.fecha, isYou: !x.r.isAutor && hofIsPublished(x.r.game_id), isAutor: !!x.r.isAutor };
   });
-  var tAutor = cw && AUTOR_TIEMPOS[cw.num];
-  if (tAutor) list.unshift({ game_id: "", iniciales: AUTOR_INICIALES, tiempo_s: tAutor, fecha: "", isYou: false, isAutor: true });
+  if (tAutor && !mAutor) list.unshift({ game_id: "", iniciales: AUTOR_INICIALES, tiempo_s: tAutor, fecha: "", isYou: false, isAutor: true });
   list.forEach(function (e, i) { e.pos = i + 1; });
   return list;
 }
