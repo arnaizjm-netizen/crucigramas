@@ -35,14 +35,13 @@
   .sub { margin: 0; color: var(--muted); }
   /* que crucigrama es: miniatura de su cuadricula + su numero en grande */
   .cw-badge {
-    display: inline-flex; align-items: center; gap: 16px; margin: 16px auto 0; padding: 10px 22px 10px 12px;
-    background: var(--panel-bg); border: 2px solid var(--accent); border-radius: 14px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    display: inline-flex; align-items: center; gap: 12px; margin: 12px auto 0; padding: 7px 16px 7px 8px;
+    background: var(--panel-bg); border: 1px solid var(--accent); border-radius: 10px;
   }
-  .cw-badge img { width: 84px; height: 84px; border-radius: 4px; background: #fdfdfb; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+  .cw-badge img { width: 56px; height: 56px; border-radius: 3px; background: #fdfdfb; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
   .cw-badge .cw-txt { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.05; }
-  .cw-badge .cw-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); }
-  .cw-badge .cw-num { font-size: 2.6rem; font-weight: 800; letter-spacing: 0.02em; color: var(--accent-dark); }
+  .cw-badge .cw-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); }
+  .cw-badge .cw-num { font-size: 1.7rem; font-weight: 800; color: var(--accent-dark); }
   .sim {
     margin: 14px auto 0; padding: 8px 12px; max-width: 460px;
     background: #fde3c0; color: #5a3a00; border-radius: 8px; font-size: 0.85rem;
@@ -133,7 +132,7 @@
     <h1>HALL OF FAME</h1>
     <p class="sub" id="hofSub"></p>
     <div class="cw-badge" id="cwBadge" hidden>
-      <img id="cwThumb" alt="" width="84" height="84">
+      <img id="cwThumb" alt="" width="56" height="56">
       <div class="cw-txt"><span class="cw-label">CRUCIGRAMA GAMBERRO</span><span class="cw-num" id="cwNum"></span></div>
     </div>
     <div class="sim" id="simBanner" hidden>Modo simulado: los resultados se guardan solo en este navegador.</div>
