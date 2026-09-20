@@ -240,35 +240,32 @@
   }
   .feedback-box.show { display: block; }
   .feedback-box p { margin: 0 0 10px; }
-  .hof-box {
-    display: none;
-    width: 100%;
-    max-width: 640px;
-    box-sizing: border-box;
+  /* fila "Completado": pregunta + Quiero mas + Hall of Fame (a su derecha) */
+  .fin-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
+  .fin-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .fin-cap { font-size: 0.78rem; color: var(--muted); line-height: 1.1; text-align: center; }
+  .fin-row .feedback-link-inline { margin: 0; }
+  .hof-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: var(--panel-bg);
+    color: var(--text);
     border: 2px solid var(--accent);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-top: 12px;
-    text-align: center;
+    border-radius: 8px;
+    padding: 3px 14px 3px 8px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
   }
-  .hof-box.show { display: block; }
+  .hof-mini img { width: 32px; height: 32px; display: block; }
   /* aviso visual al terminar: onda que se apaga, 3 veces */
-  .hof-box.attn { animation: hofPulse 1.3s ease-out 3; }
+  .hof-mini.attn { animation: hofPulse 1.3s ease-out 3; }
   @keyframes hofPulse {
     0%   { box-shadow: 0 0 0 0 var(--accent); }
-    100% { box-shadow: 0 0 0 14px transparent; }
+    100% { box-shadow: 0 0 0 12px transparent; }
   }
-  @media (prefers-reduced-motion: reduce) { .hof-box.attn { animation: none; } }
-  .hof-box h2 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: 0.08em; }
-  .hof-box p { margin: 0 0 12px; font-size: 0.92rem; color: var(--muted); }
-  .hof-box .hof-enter {
-    background: var(--accent);
-    color: #fff;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    padding: 10px 26px;
-  }
+  @media (prefers-reduced-motion: reduce) { .hof-mini.attn { animation: none; } }
   .site-footer {
     width: 100%;
     max-width: 640px;
@@ -388,11 +385,6 @@
   </div>
 
   <div class="win-banner" id="winBanner"></div>
-  <div class="hof-box" id="hofBox">
-    <h2>HALL OF FAME</h2>
-    <p>Solo quienes han resuelto un crucigrama llegan hasta aquí.</p>
-    <button type="button" class="hof-enter" id="hofEnter">ENTRAR</button>
-  </div>
   <div class="feedback-box" id="feedbackBox">
     <p>Espero que te haya gustado. Si quieres recibir otro como este, pulsa aquí.</p>
     <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
@@ -655,14 +647,24 @@
       currentDefSegId = null;
       labelEl.textContent = "¡Completado!";
       textEl.textContent = "";
-      textEl.appendChild(document.createTextNode("¿Te ha gustado? "));
+      var row = document.createElement("div");
+      row.className = "fin-row";
+      var colLink = document.createElement("div");
+      colLink.className = "fin-col";
+      var q = document.createElement("span");
+      q.className = "fin-cap";
+      q.textContent = "¿Te ha gustado?";
+      colLink.appendChild(q);
       var link = document.createElement("a");
       link.href = "https://forms.gle/uaAjqZdS5TLsL7Yt9";
       link.target = "_blank";
       link.rel = "noopener";
       link.className = "feedback-link feedback-link-inline";
       link.textContent = "Quiero más";
-      textEl.appendChild(link);
+      colLink.appendChild(link);
+      row.appendChild(colLink);
+      if (hofShowButton()) row.appendChild(hofButtonEl());   // a la derecha de "Quiero mas"
+      textEl.appendChild(row);
       return;
     }
     var segId = segIdFor(state.selR, state.selC, state.dir);
@@ -825,7 +827,7 @@
     recordatorioIaMostrado = false;
     siguienteMostrado = false;
     hideSiguiente();
-    hofRefresh();
+    checkBtn.style.display = "";
     exitCheckMode();
     clearCheckStyles();
     for (var r2 = 0; r2 < N; r2++) {
@@ -965,7 +967,8 @@
   // crucigramas 002 en adelante.
   var HOF_LIVE = true;
   var HOF_ENABLED = HOF_LIVE && CRUCIGRAMA_NUM >= 2;
-  var hofBox = document.getElementById("hofBox");
+  var HOF_ICON = "data:image/webp;base64,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";   // trofeo, 72 px
+  var hofPulseUntil = 0;   // hasta cuando el boton late (se recrea al redibujar la definicion)
 
   function hofCrosswordId() {
     var s = "" + CRUCIGRAMA_NUM;
@@ -977,29 +980,35 @@
     try { return localStorage.getItem("hof_pub_" + gameId) === "1"; } catch (e) { return false; }
   }
 
-  // el derecho a mostrar ENTRAR sale de la partida completada guardada, no de sessionStorage
-  function hofRefresh() {
-    var show = HOF_ENABLED && state.finished && !!state.gameId && !hofIsPublished(state.gameId);
-    hofBox.classList.toggle("show", show);
+  // el derecho a mostrar el boton sale de la partida completada guardada, no de sessionStorage
+  function hofShowButton() {
+    return HOF_ENABLED && state.finished && !!state.gameId && !hofIsPublished(state.gameId);
   }
 
-  // Al terminar, el banner y el Hall of Fame quedan bajo la cuadricula, fuera de pantalla: se
-  // desplaza la vista hasta ellos (tras una pausa para ver la victoria) y el recuadro late.
-  function hofDestacar() {
-    if (!hofBox.classList.contains("show")) return;
-    hofBox.classList.add("attn");
-    setTimeout(function () {
-      var banner = document.getElementById("winBanner");
-      var top = banner.getBoundingClientRect().top + window.pageYOffset;
-      var bottom = hofBox.getBoundingClientRect().bottom + window.pageYOffset;
-      // centra banner + recuadro; si no caben, prima que se vea el principio del banner
-      var y = Math.min((top + bottom) / 2 - window.innerHeight / 2, top - 12);
-      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      window.scrollTo({ top: Math.max(0, y), behavior: reduce ? "auto" : "smooth" });
-    }, 800);
+  // "Deja tu huella en…" + boton "Hall of Fame" (con el trofeo), a la derecha de "Quiero mas" al terminar
+  function hofButtonEl() {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.id = "hofEnter";
+    b.className = "hof-mini" + (Date.now() < hofPulseUntil ? " attn" : "");
+    var img = document.createElement("img");
+    img.src = HOF_ICON;
+    img.alt = "";
+    img.width = 32; img.height = 32;
+    b.appendChild(img);
+    b.appendChild(document.createTextNode("Hall of Fame"));
+    b.addEventListener("click", hofEnter);
+    var wrap = document.createElement("div");
+    wrap.className = "fin-col";
+    var cap = document.createElement("span");
+    cap.className = "fin-cap";
+    cap.textContent = "Deja tu huella en…";
+    wrap.appendChild(cap);
+    wrap.appendChild(b);
+    return wrap;
   }
 
-  document.getElementById("hofEnter").addEventListener("click", function () {
+  function hofEnter() {
     var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
     var claim = {
       crossword_id: hofCrosswordId(),
@@ -1016,7 +1025,7 @@
       if (++tries > 10) { go(); return; }
       setTimeout(attempt, 100);
     })();
-  });
+  }
 
   // ---------- victoria ----------
   function finishGame() {
@@ -1026,6 +1035,7 @@
     pauseBtn.style.display = "none";
     timerEl.classList.remove("paused");
     state.finished = true;
+    if (isNewCompletion) hofPulseUntil = Date.now() + 4500;
     state.finalElapsedMs = state.elapsedMs;
     renderTimer(state.finalElapsedMs);
     clearCheckStyles();
@@ -1037,6 +1047,7 @@
       }
     }
     exitCheckMode();
+    checkBtn.style.display = "none";    // ya no hay nada que comprobar
     var totalSec = Math.floor(state.finalElapsedMs / 1000);
     var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
     var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
@@ -1046,9 +1057,7 @@
     document.getElementById("saveImgBtn").style.display = "inline-block";
     document.getElementById("feedbackBox").classList.add("show");
     saveState();
-    hofRefresh();
     if (isNewCompletion) {
-      hofDestacar();
       // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
       // GoatCounter guarda un unico titulo por path, asi que en el titulo no serviria
       gcEventPartida("-completado-" + Math.floor(state.finalElapsedMs / 1000), "Crucigrama completado");
