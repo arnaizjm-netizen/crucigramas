@@ -253,6 +253,13 @@
     text-align: center;
   }
   .hof-box.show { display: block; }
+  /* aviso visual al terminar: onda que se apaga, 3 veces */
+  .hof-box.attn { animation: hofPulse 1.3s ease-out 3; }
+  @keyframes hofPulse {
+    0%   { box-shadow: 0 0 0 0 var(--accent); }
+    100% { box-shadow: 0 0 0 14px transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hof-box.attn { animation: none; } }
   .hof-box h2 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: 0.08em; }
   .hof-box p { margin: 0 0 12px; font-size: 0.92rem; color: var(--muted); }
   .hof-box .hof-enter {
@@ -976,6 +983,22 @@
     hofBox.classList.toggle("show", show);
   }
 
+  // Al terminar, el banner y el Hall of Fame quedan bajo la cuadricula, fuera de pantalla: se
+  // desplaza la vista hasta ellos (tras una pausa para ver la victoria) y el recuadro late.
+  function hofDestacar() {
+    if (!hofBox.classList.contains("show")) return;
+    hofBox.classList.add("attn");
+    setTimeout(function () {
+      var banner = document.getElementById("winBanner");
+      var top = banner.getBoundingClientRect().top + window.pageYOffset;
+      var bottom = hofBox.getBoundingClientRect().bottom + window.pageYOffset;
+      // centra banner + recuadro; si no caben, prima que se vea el principio del banner
+      var y = Math.min((top + bottom) / 2 - window.innerHeight / 2, top - 12);
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.scrollTo({ top: Math.max(0, y), behavior: reduce ? "auto" : "smooth" });
+    }, 800);
+  }
+
   document.getElementById("hofEnter").addEventListener("click", function () {
     var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
     var claim = {
@@ -1025,6 +1048,7 @@
     saveState();
     hofRefresh();
     if (isNewCompletion) {
+      hofDestacar();
       // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
       // GoatCounter guarda un unico titulo por path, asi que en el titulo no serviria
       gcEventPartida("-completado-" + Math.floor(state.finalElapsedMs / 1000), "Crucigrama completado");
