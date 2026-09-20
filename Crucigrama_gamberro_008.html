@@ -110,9 +110,17 @@
   }
   button:active, .btn-link:active { transform: translateY(1px); }
   #checkBtn.is-checking {
-    background: var(--danger);
+    background: var(--accent);
     color: #fff;
+    font-weight: 800;
   }
+  /* cuadricula llena con errores: el boton para volver a resolver late hasta que se toque una casilla */
+  #checkBtn.attn { animation: checkPulse 1.2s ease-out infinite; }
+  @keyframes checkPulse {
+    0%   { box-shadow: 0 0 0 0 var(--accent); }
+    100% { box-shadow: 0 0 0 12px transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) { #checkBtn.attn { animation: none; outline: 3px solid var(--accent); outline-offset: 2px; } }
   #resetBtn { color: var(--muted); }
   #opinionLink { background: var(--accent); color: #fff; }
   #pauseBtn.is-paused { background: var(--empty-hint); color: #1f2320; }
@@ -756,7 +764,7 @@
 
   var checkBtn = document.getElementById("checkBtn");
   var CHECK_LABEL_IDLE = "Comprobar";
-  var CHECK_LABEL_ACTIVE = "Volver a normal";
+  var CHECK_LABEL_ACTIVE = "Volver a resolver";
 
   function enterCheckMode() {
     state.checking = true;
@@ -766,8 +774,38 @@
 
   function exitCheckMode() {
     state.checking = false;
-    checkBtn.classList.remove("is-checking");
+    checkBtn.classList.remove("is-checking", "attn");
     checkBtn.textContent = CHECK_LABEL_IDLE;
+  }
+
+  // marca casillas correctas, erroneas y vacias y entra en modo comprobar
+  function markCheck() {
+    for (var r = 0; r < N; r++) {
+      for (var c = 0; c < N; c++) {
+        if (DATA.black[r][c]) continue;
+        var d = cellDivOf(r, c);
+        if (!d) continue;
+        if (!state.grid[r][c]) {
+          d.classList.add("cell-empty");
+        } else if (state.grid[r][c] !== DATA.solution[r][c]) {
+          d.classList.add("cell-wrong");
+        } else {
+          d.classList.add("cell-correct");
+        }
+      }
+    }
+    enterCheckMode();
+  }
+
+  // cuadricula llena pero con errores: salta solo a modo comprobar (el aviso, solo la primera vez)
+  var avisoLlenoMostrado = false;
+  function autoComprobar() {
+    markCheck();
+    checkBtn.classList.add("attn");
+    if (!avisoLlenoMostrado) {
+      avisoLlenoMostrado = true;
+      showToast("Todas las casillas están llenas, pero hay errores. Las marcadas en naranja no son correctas.", 5000);
+    }
   }
 
   function toggleCheck() {
@@ -786,21 +824,7 @@
       finishGame();
       return;
     }
-    for (var r = 0; r < N; r++) {
-      for (var c = 0; c < N; c++) {
-        if (DATA.black[r][c]) continue;
-        var d = cellDivOf(r, c);
-        if (!d) continue;
-        if (!state.grid[r][c]) {
-          d.classList.add("cell-empty");
-        } else if (state.grid[r][c] !== DATA.solution[r][c]) {
-          d.classList.add("cell-wrong");
-        } else {
-          d.classList.add("cell-correct");
-        }
-      }
-    }
-    enterCheckMode();
+    markCheck();
   }
   checkBtn.addEventListener("click", toggleCheck);
 
@@ -825,6 +849,7 @@
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
     recordatorioIaMostrado = false;
+    avisoLlenoMostrado = false;
     siguienteMostrado = false;
     hideSiguiente();
     checkBtn.style.display = "";
@@ -1115,11 +1140,11 @@
   // ---------- toast ----------
   var toastEl = document.getElementById("toastEl");
   var toastTimeout = null;
-  function showToast(msg) {
+  function showToast(msg, ms) {
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, 1800);
+    toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, ms || 1800);
   }
 
   // ---------- aviso "quiero el siguiente" (35% de casillas rellenadas) ----------
@@ -1269,8 +1294,9 @@
           saveState();
           checkSiguienteAviso();
 
-          if (isGridFull() && isGridAllCorrect()) {
-            finishGame();
+          if (isGridFull()) {
+            if (isGridAllCorrect()) finishGame();
+            else autoComprobar();
           }
         });
 
