@@ -109,14 +109,16 @@
     button, .btn-link { padding: 8px 9px; font-size: 0.92rem; }
   }
   button:active, .btn-link:active { transform: translateY(1px); }
-  /* Comprobar destacado mientras se juega; en modo comprobar (Volver a resolver) pasa a verde oscuro */
+  /* Comprobar destacado mientras se juega (naranja, como Reanudar); en modo comprobar
+     (Volver a resolver) pasa a verde */
   #checkBtn {
-    background: var(--accent);
-    color: #fff;
+    background: var(--empty-hint);
+    color: #1f2320;
     font-weight: 700;
   }
   #checkBtn.is-checking {
-    background: var(--accent-dark);
+    background: var(--accent);
+    color: #fff;
     font-weight: 800;
   }
   /* cuadricula llena con errores: el boton para volver a resolver late hasta que se toque una casilla */
