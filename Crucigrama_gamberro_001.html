@@ -651,6 +651,59 @@
   var currentDefSeg = null;
   var currentDefSegId = null;
 
+  // Altura fija del panel de definiciones, para que la cuadricula no suba ni baje al cambiar de
+  // palabra. Se reserva la de la definicion mas alta con un tope de 3 lineas (mas la linea de ayuda
+  // si cabe). Las definiciones que no caben en ese espacio se muestran con la letra algo mas
+  // pequena; y la linea de ayuda ("¿Necesitas una ayudita?") solo sale si cabe sin agrandar el panel.
+  var defsReserve = 0;
+  function fixDefsHeight() {
+    var panel = document.querySelector(".defs-panel");
+    if (!panel || !panel.offsetWidth) return;
+    var probe = panel.cloneNode(true);
+    probe.removeAttribute("id");
+    probe.style.cssText = "position:absolute;visibility:hidden;pointer-events:none;left:-9999px;top:0;min-height:0;" +
+      "width:" + panel.getBoundingClientRect().width + "px";
+    var pl = probe.querySelector(".defs-label"), pt = probe.querySelector(".defs-text");
+    pt.style.fontSize = "";
+    document.body.appendChild(probe);
+    pl.textContent = "Horizontal 1";
+    pt.textContent = "x";
+    var one = probe.offsetHeight;
+    var lineH = parseFloat(getComputedStyle(pt).lineHeight) || 22;
+    var rem = document.createElement("span");
+    rem.className = "ayuda-reminder";
+    rem.textContent = "¿Necesitas una ayudita? Pídesela a la IA.";
+    pt.appendChild(rem);
+    var remH = probe.offsetHeight - one;
+    var maxNeed = one;
+    Object.keys(DATA.segments).forEach(function (id) {
+      var seg = DATA.segments[id];
+      pl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
+      pt.textContent = seg.clue;
+      maxNeed = Math.max(maxNeed, probe.offsetHeight);
+    });
+    document.body.removeChild(probe);
+    defsReserve = Math.round(Math.min(one + 2 * lineH, maxNeed + remH));
+    panel.style.minHeight = defsReserve + "px";
+    fitDefsText();
+  }
+  // reduce la letra de la definicion actual hasta que quepa en el espacio reservado (sin bajar del 78 %)
+  function fitDefsText() {
+    var panel = document.querySelector(".defs-panel"), t = document.getElementById("defsText");
+    t.style.fontSize = "";
+    if (!defsReserve || state.finished || !currentDefSeg) return;
+    var size = parseFloat(getComputedStyle(t).fontSize), min = size * 0.78, tries = 0;
+    while (panel.offsetHeight > defsReserve + 1 && size > min && tries++ < 10) {
+      size *= 0.95;
+      t.style.fontSize = size + "px";
+    }
+  }
+  var fixDefsTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(fixDefsTimer);
+    fixDefsTimer = setTimeout(fixDefsHeight, 150);
+  });
+
   // ---------- recordatorio contextual de ayuda IA ----------
   // variables sueltas, no persistidas -- se reinician a mano en "Reiniciar"
   var defsShownCount = 0;
@@ -660,6 +713,7 @@
   function updateDefs() {
     var labelEl = document.getElementById("defsLabel");
     var textEl = document.getElementById("defsText");
+    textEl.style.fontSize = "";
     if (state.finished) {
       currentDefSeg = null;
       currentDefSegId = null;
@@ -698,6 +752,7 @@
     currentDefSegId = segId;
     labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
     textEl.textContent = seg.clue;
+    fitDefsText();
 
     defsShownCount++;
     var elegible = Object.keys(state.wordsDone).length >= 6;
@@ -710,6 +765,8 @@
       reminder.className = "ayuda-reminder";
       reminder.textContent = "¿Necesitas una ayudita? Pídesela a la IA.";
       textEl.appendChild(reminder);
+      // si no cabe sin agrandar el panel (y mover la cuadricula), no se muestra
+      if (defsReserve && document.querySelector(".defs-panel").offsetHeight > defsReserve + 1) textEl.removeChild(reminder);
     }
   }
 
@@ -1382,6 +1439,8 @@
     }
     updatePauseUI();
     renderTimer(state.elapsedMs);
+    fixDefsHeight();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fixDefsHeight);
     selectCell(state.selR, state.selC, state.dir);
   })();
 
