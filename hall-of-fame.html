@@ -402,8 +402,10 @@ function hofRank(rows, cw) {
     return { game_id: x.r.game_id, iniciales: x.r.iniciales, tiempo_s: x.r.tiempo_s,
              fecha: x.fecha, isYou: !x.r.isAutor && hofIsPublished(x.r.game_id), isAutor: !!x.r.isAutor };
   });
-  if (tAutor && !mAutor) list.unshift({ game_id: "", iniciales: AUTOR_INICIALES, tiempo_s: tAutor, fecha: "", isYou: false, isAutor: true });
   list.forEach(function (e, i) { e.pos = i + 1; });
+  if (tAutor && !mAutor) {   // el autor que abre la lista es el jugador 0: los demas empiezan en el 1
+    list.unshift({ game_id: "", iniciales: AUTOR_INICIALES, tiempo_s: tAutor, fecha: "", isYou: false, isAutor: true, pos: 0 });
+  }
   return list;
 }
 
