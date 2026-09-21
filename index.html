@@ -116,8 +116,8 @@
   .prev-item { margin: 0; text-align: center; }
   .prev-item img { max-width: 160px; height: auto; border-radius: 4px; }
   .prev-item figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
-  /* solo el mas reciente de los anteriores se puede jugar desde la portada */
-  .prev-item-play { width: 210px; max-width: 100%; }
+  /* los anteriores publicos se pueden jugar desde la portada; los privados son solo una miniatura */
+  .prev-item-play { width: 190px; max-width: 100%; }
   /* tarjeta-boton: miniatura + barra verde "JUGAR" pegada abajo; se ve y se siente clicable */
   .prev-link {
     display: block;
@@ -240,6 +240,14 @@
           <span class="prev-cta">JUGAR &rarr;</span>
         </a>
       </div>
+      <figure class="prev-item">
+        <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
+        <figcaption>Nº 005</figcaption>
+      </figure>
+      <figure class="prev-item">
+        <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
+        <figcaption>Nº 004</figcaption>
+      </figure>
       </div>
     </section>
 
