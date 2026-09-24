@@ -452,6 +452,15 @@
     </div>
   </div>
 
+  <div class="dificultad-box" id="dificultadBox">
+    <p class="dificultad-q" id="dificultadQ">¿Cómo de difícil te ha parecido?</p>
+    <div class="dificultad-btns">
+      <button type="button" class="dificultad-btn" data-nivel="facil">😌 Fácil</button>
+      <button type="button" class="dificultad-btn" data-nivel="normal">👌 En su punto</button>
+      <button type="button" class="dificultad-btn" data-nivel="dificil">🤯 Para tirarse de los pelos</button>
+    </div>
+  </div>
+
   <div class="defs-panel">
     <div class="defs-label" id="defsLabel">Definicion</div>
     <div class="defs-text" id="defsText">Toca una casilla para empezar.</div>
@@ -465,15 +474,6 @@
   <div class="feedback-box" id="feedbackBox">
     <p>Espero que te haya gustado. Si quieres recibir otro como este, pulsa aquí.</p>
     <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
-  </div>
-
-  <div class="dificultad-box" id="dificultadBox">
-    <p class="dificultad-q" id="dificultadQ">¿Qué tal de difícil te ha parecido?</p>
-    <div class="dificultad-btns">
-      <button type="button" class="dificultad-btn" data-nivel="facil">😌 Fácil</button>
-      <button type="button" class="dificultad-btn" data-nivel="normal">👌 En su punto</button>
-      <button type="button" class="dificultad-btn" data-nivel="dificil">🤯 Para tirarse de los pelos</button>
-    </div>
   </div>
 
 <section class="seo-clues" aria-label="Algunas definiciones">
@@ -1317,7 +1317,7 @@
   function renderDificultad() {
     var votado = state.dificultadVoto;
     var q = document.getElementById("dificultadQ");
-    q.textContent = votado ? "Tu voto: " + DIFICULTAD_LABELS[votado] : "¿Qué tal de difícil te ha parecido?";
+    q.textContent = votado ? "Tu voto: " + DIFICULTAD_LABELS[votado] : "¿Cómo de difícil te ha parecido?";
     var btns = document.querySelectorAll(".dificultad-btn");
     for (var i = 0; i < btns.length; i++) {
       var nivel = btns[i].getAttribute("data-nivel");
