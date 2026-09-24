@@ -424,7 +424,7 @@
 </head>
 <body>
   <h1 id="titleEl">Crucigrama Gamberro 003</h1>
-  <div class="ia-note">Pide ayuda a tu IA favorita (en caso de necesidad): clic en la definición para copiarla.</div>
+  <div class="ia-note" id="iaNote">Pide ayuda a tu IA favorita (en caso de necesidad): clic en la definición para copiarla.</div>
   <div class="save-note" id="saveNote">💾 Tu progreso se guarda solo — vuelve cuando quieras a <span id="saveNoteUrl"></span></div>
 
   <div class="toolbar">
@@ -1023,6 +1023,8 @@
     document.getElementById("shareResultBtn").style.display = "none";
     document.getElementById("winBanner").classList.remove("show");
     document.getElementById("dificultadBox").classList.remove("show");
+    document.getElementById("iaNote").style.display = "";
+    document.getElementById("saveNote").style.display = "";
     pauseTimer();
     renderTimer(0);
     pauseBtn.style.display = "";
@@ -1233,6 +1235,8 @@
     }
     exitCheckMode();
     checkBtn.style.display = "none";    // ya no hay nada que comprobar
+    document.getElementById("iaNote").style.display = "none";    // ya no hace falta ayuda
+    document.getElementById("saveNote").style.display = "none";  // ya no hay nada que reanudar
     var totalSec = Math.floor(state.finalElapsedMs / 1000);
     var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
     var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
