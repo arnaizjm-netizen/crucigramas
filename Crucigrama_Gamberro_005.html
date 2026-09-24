@@ -149,9 +149,15 @@
   #pauseBtn.is-paused { background: var(--empty-hint); color: #1f2320; }
   .timer.paused { opacity: 0.55; }
   #shareResultBtn {
+    display: none;
     background: var(--win);
     color: #fff;
-    display: none;
+    font-weight: 700;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: none;
+    font: inherit;
+    cursor: pointer;
   }
   .grid-wrap {
     width: 100%;
@@ -244,33 +250,23 @@
     color: var(--muted);
     margin-top: 4px;
   }
-  .win-banner {
-    width: 100%;
-    max-width: 640px;
-    background: #e9f7ec;
-    border: 1px solid var(--win);
-    color: var(--accent-dark);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-top: 12px;
-    text-align: center;
-    display: none;
-  }
-  .win-banner.show { display: block; }
-  /* votacion de dificultad: siempre visible al terminar, no se puede cambiar el voto */
-  .dificultad-box {
+  /* caja unica al completar: titulo + dificultad + acciones (HdF / compartir) + quiero mas.
+     Sustituye a lo que antes eran tres cajas sueltas (win-banner, dificultad-box, feedback-box). */
+  .completado-box {
     display: none;
     width: 100%;
     max-width: 640px;
     box-sizing: border-box;
-    background: var(--panel-bg);
-    border: 1px solid var(--cell-border);
+    background: #e9f7ec;
+    border: 1px solid var(--win);
     border-radius: 10px;
-    padding: 14px 16px;
-    margin-top: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
     text-align: center;
   }
-  .dificultad-box.show { display: block; }
+  .completado-box.show { display: block; }
+  .completado-title { margin: 0 0 14px; font-size: 1.15rem; font-weight: 800; color: var(--accent-dark); }
+  .dificultad-wrap { margin-bottom: 16px; }
   .dificultad-q { margin: 0 0 10px; font-size: 0.92rem; color: var(--muted); }
   .dificultad-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
   .dificultad-btn {
@@ -291,11 +287,25 @@
   .dificultad-btn.chosen[data-nivel="normal"] { background: var(--empty-hint); color: #1f2320; }
   .dificultad-btn.chosen[data-nivel="dificil"] { background: var(--danger); color: #fff; }
   .dificultad-btn:disabled { cursor: default; opacity: 0.55; }
-  /* fila "Completado": pregunta + Quiero mas + Hall of Fame (a su derecha) */
-  .fin-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
+  /* Hall of Fame + Compartir resultado, en ese orden, alineados por abajo */
+  .completado-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 10px 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+  .completado-feedback {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    font-size: 0.85rem;
+  }
   .fin-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .fin-col[hidden] { display: none; }  /* el propio display:flex ganaba al atributo hidden */
   .fin-cap { font-size: 0.78rem; color: var(--muted); line-height: 1.1; text-align: center; }
-  .fin-row .feedback-link-inline { margin: 0; }
   .hof-mini {
     display: inline-flex;
     align-items: center;
@@ -416,7 +426,9 @@
     }
     .cell-white { background: #fdfdfb; }
     .cell-white input { color: #111; }
-    .win-banner { background: #163420; color: #bdeecb; }
+    .completado-box { background: #163420; border-color: var(--win); }
+    .completado-title { color: #bdeecb; }
+    .completado-actions, .completado-feedback { border-top-color: rgba(255,255,255,0.12); }
     .siguiente-toast p a { color: #7fd19f; }
     .ia-note { background: #163420; color: #ffa94d; }
   }
@@ -433,21 +445,37 @@
       <button id="pauseBtn" type="button">Pausa</button>
       <button id="checkBtn" type="button">Comprobar</button>
       <button id="resetBtn" type="button">Reiniciar</button>
-      <button id="shareResultBtn" type="button">Compartir resultado</button>
       <a id="opinionLink" class="btn-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Opina</a>
     </div>
   </div>
 
-  <div class="dificultad-box" id="dificultadBox">
-    <p class="dificultad-q" id="dificultadQ">¿Cómo de difícil te ha parecido?</p>
-    <div class="dificultad-btns">
-      <button type="button" class="dificultad-btn" data-nivel="facil">😌 Fácil</button>
-      <button type="button" class="dificultad-btn" data-nivel="normal">👌 En su punto</button>
-      <button type="button" class="dificultad-btn" data-nivel="dificil">🤯 Para tirarse de los pelos</button>
+  <div class="completado-box" id="completadoBox">
+    <p class="completado-title" id="completadoTitle"></p>
+
+    <div class="dificultad-wrap">
+      <p class="dificultad-q" id="dificultadQ">¿Cómo de difícil te ha parecido?</p>
+      <div class="dificultad-btns">
+        <button type="button" class="dificultad-btn" data-nivel="facil">😌 Fácil</button>
+        <button type="button" class="dificultad-btn" data-nivel="normal">👌 En su punto</button>
+        <button type="button" class="dificultad-btn" data-nivel="dificil">🤯 Para tirarse de los pelos</button>
+      </div>
     </div>
+
+    <div class="completado-actions">
+      <div class="fin-col" id="hofColWrap" hidden>
+        <span class="fin-cap">Deja tu huella en…</span>
+        <button type="button" class="hof-mini" id="hofEnterBtn"><img id="hofIcon" width="32" height="32" alt="">Hall of Fame</button>
+      </div>
+      <button id="shareResultBtn" type="button">Compartir resultado</button>
+    </div>
+
+    <p class="completado-feedback">
+      <span class="fin-cap">¿Te ha gustado?</span>
+      <a class="feedback-link feedback-link-inline" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
+    </p>
   </div>
 
-  <div class="defs-panel">
+  <div class="defs-panel" id="defsPanel">
     <div class="defs-label" id="defsLabel">Definicion</div>
     <div class="defs-text" id="defsText">Toca una casilla para empezar.</div>
   </div>
@@ -455,8 +483,6 @@
   <div class="grid-wrap">
     <div class="grid" id="gridEl"></div>
   </div>
-
-  <div class="win-banner" id="winBanner"></div>
 
 
   <p class="seo-note">Crucigrama online gratuito en español con juegos de palabras, dobles sentidos, cultura general y pistas con ingenio. Se juega directamente en el navegador y no requiere registro.</p>
@@ -803,28 +829,12 @@
     var textEl = document.getElementById("defsText");
     textEl.style.fontSize = "";
     if (state.finished) {
+      // al completar, el panel de definiciones se oculta (ver finishGame): esta rama
+      // solo cubre el caso raro de tocar una casilla despues de terminar.
       currentDefSeg = null;
       currentDefSegId = null;
       labelEl.textContent = "¡Completado!";
       textEl.textContent = "";
-      var row = document.createElement("div");
-      row.className = "fin-row";
-      var colLink = document.createElement("div");
-      colLink.className = "fin-col";
-      var q = document.createElement("span");
-      q.className = "fin-cap";
-      q.textContent = "¿Te ha gustado?";
-      colLink.appendChild(q);
-      var link = document.createElement("a");
-      link.href = "https://forms.gle/uaAjqZdS5TLsL7Yt9";
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.className = "feedback-link feedback-link-inline";
-      link.textContent = "Quiero más";
-      colLink.appendChild(link);
-      row.appendChild(colLink);
-      if (hofShowButton()) row.appendChild(hofButtonEl());   // a la derecha de "Quiero mas"
-      textEl.appendChild(row);
       return;
     }
     var segId = segIdFor(state.selR, state.selC, state.dir);
@@ -1021,10 +1031,12 @@
       }
     }
     document.getElementById("shareResultBtn").style.display = "none";
-    document.getElementById("winBanner").classList.remove("show");
-    document.getElementById("dificultadBox").classList.remove("show");
+    document.getElementById("completadoBox").classList.remove("show");
+    document.getElementById("hofColWrap").hidden = true;
     document.getElementById("iaNote").style.display = "";
     document.getElementById("saveNote").style.display = "";
+    document.getElementById("opinionLink").style.display = "";
+    document.getElementById("defsPanel").style.display = "";
     pauseTimer();
     renderTimer(0);
     pauseBtn.style.display = "";
@@ -1171,28 +1183,17 @@
     return HOF_ENABLED && state.finished && !!state.gameId && !hofIsPublished(state.gameId);
   }
 
-  // "Deja tu huella en…" + boton "Hall of Fame" (con el trofeo), a la derecha de "Quiero mas" al terminar
-  function hofButtonEl() {
-    var b = document.createElement("button");
-    b.type = "button";
-    b.id = "hofEnter";
-    b.className = "hof-mini" + (Date.now() < hofPulseUntil ? " attn" : "");
-    var img = document.createElement("img");
-    img.src = HOF_ICON;
-    img.alt = "";
-    img.width = 32; img.height = 32;
-    b.appendChild(img);
-    b.appendChild(document.createTextNode("Hall of Fame"));
-    b.addEventListener("click", hofEnter);
-    var wrap = document.createElement("div");
-    wrap.className = "fin-col";
-    var cap = document.createElement("span");
-    cap.className = "fin-cap";
-    cap.textContent = "Deja tu huella en…";
-    wrap.appendChild(cap);
-    wrap.appendChild(b);
-    return wrap;
+  // "Deja tu huella en…" + boton Hall of Fame (con el trofeo), dentro de la caja de completado
+  function renderHof() {
+    var wrap = document.getElementById("hofColWrap");
+    var show = hofShowButton();
+    wrap.hidden = !show;
+    if (!show) return;
+    var icon = document.getElementById("hofIcon");
+    if (!icon.getAttribute("src")) icon.src = HOF_ICON;
+    document.getElementById("hofEnterBtn").classList.toggle("attn", Date.now() < hofPulseUntil);
   }
+  document.getElementById("hofEnterBtn").addEventListener("click", hofEnter);
 
   function hofEnter() {
     var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
@@ -1237,15 +1238,18 @@
     checkBtn.style.display = "none";    // ya no hay nada que comprobar
     document.getElementById("iaNote").style.display = "none";    // ya no hace falta ayuda
     document.getElementById("saveNote").style.display = "none";  // ya no hay nada que reanudar
+    document.getElementById("opinionLink").style.display = "none";  // ya esta "Quiero mas" debajo
+    document.getElementById("defsPanel").style.display = "none";    // ya no hay definicion que mostrar
     var totalSec = Math.floor(state.finalElapsedMs / 1000);
     var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
     var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
-    var banner = document.getElementById("winBanner");
-    banner.textContent = "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
-    banner.classList.add("show");
+    // caja unica: titulo + dificultad + Hall of Fame/Compartir + Quiero mas (ver "herencia" del 25/09/2026)
+    document.getElementById("completadoTitle").textContent =
+      "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
+    document.getElementById("completadoBox").classList.add("show");
     document.getElementById("shareResultBtn").style.display = "inline-block";
-    document.getElementById("dificultadBox").classList.add("show");
     renderDificultad();
+    renderHof();
     saveState();
     if (isNewCompletion) {
       // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
