@@ -148,7 +148,7 @@
   #opinionLink { background: var(--accent); color: #fff; }
   #pauseBtn.is-paused { background: var(--empty-hint); color: #1f2320; }
   .timer.paused { opacity: 0.55; }
-  #saveImgBtn {
+  #shareResultBtn {
     background: var(--win);
     color: #fff;
     display: none;
@@ -413,7 +413,7 @@
       <button id="pauseBtn" type="button">Pausa</button>
       <button id="checkBtn" type="button">Comprobar</button>
       <button id="resetBtn" type="button">Reiniciar</button>
-      <button id="saveImgBtn" type="button">Guardar imagen</button>
+      <button id="shareResultBtn" type="button">Compartir resultado</button>
       <a id="opinionLink" class="btn-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Opina</a>
     </div>
   </div>
@@ -1000,7 +1000,7 @@
         if (d2) d2.classList.remove("cell-win");
       }
     }
-    document.getElementById("saveImgBtn").style.display = "none";
+    document.getElementById("shareResultBtn").style.display = "none";
     document.getElementById("winBanner").classList.remove("show");
     document.getElementById("feedbackBox").classList.remove("show");
     pauseTimer();
@@ -1219,7 +1219,7 @@
     var banner = document.getElementById("winBanner");
     banner.textContent = "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
     banner.classList.add("show");
-    document.getElementById("saveImgBtn").style.display = "inline-block";
+    document.getElementById("shareResultBtn").style.display = "inline-block";
     document.getElementById("feedbackBox").classList.add("show");
     saveState();
     if (isNewCompletion) {
@@ -1229,52 +1229,34 @@
     }
   }
 
-  // ---------- exportar imagen ----------
-  document.getElementById("saveImgBtn").addEventListener("click", function () {
-    var cell = 34, pad = 30;
-    var w = pad + N * cell, h = pad + N * cell;
-    var canvas = document.createElement("canvas");
-    canvas.width = w; canvas.height = h;
-    var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = "bold 13px sans-serif";
-    ctx.fillStyle = "#555555";
-    for (var i = 0; i < N; i++) {
-      ctx.fillText(String(i + 1), pad + i * cell + cell / 2, pad / 2);
-      ctx.fillText(String(i + 1), pad / 2, pad + i * cell + cell / 2);
+  // ---------- compartir resultado (estilo Wordle) ----------
+  document.getElementById("shareResultBtn").addEventListener("click", function () {
+    var num3 = ("00" + CRUCIGRAMA_NUM).slice(-3);
+    var totalSec = Math.floor((state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs) / 1000);
+    var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
+    var pad2 = function (n) { return n < 10 ? "0" + n : "" + n; };
+    // "Pistas sudadas: 100%" es una broma fija (siempre 100%), no una metrica real:
+    // nunca hay que delatar cuanta ayuda ha pedido cada uno.
+    var canonicalEl = document.querySelector('link[rel="canonical"]');
+    var url = (canonicalEl ? canonicalEl.href : location.href.split("?")[0]) + "?ref=compartir";
+    var resumen = "Crucigrama Gamberro #" + num3 + " resuelto en " + pad2(mm) + ":" + pad2(ss) + " 😈" +
+      "\n\nPistas sudadas: 100%";
+
+    gcEventPartida("-compartir-resultado", "Compartir resultado");
+
+    if (navigator.share) {
+      navigator.share({ title: "Crucigrama Gamberro #" + num3, text: resumen, url: url }).catch(function () {});
+      return;
     }
-    for (var r = 0; r < N; r++) {
-      for (var c = 0; c < N; c++) {
-        var x = pad + c * cell, y = pad + r * cell;
-        if (DATA.black[r][c]) {
-          ctx.fillStyle = "#111111";
-          ctx.fillRect(x, y, cell, cell);
-        } else {
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(x, y, cell, cell);
-          ctx.strokeStyle = "#bbbbbb";
-          ctx.lineWidth = 1;
-          ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
-          ctx.fillStyle = "#2f8f3f";
-          ctx.font = "bold 18px sans-serif";
-          ctx.fillText(state.grid[r][c] || "", x + cell / 2, y + cell / 2 + 1);
-        }
-      }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(resumen + "\n\n" + url).then(function () {
+        showToast("Copiado ✓");
+      }).catch(function () {
+        showToast("No se pudo copiar");
+      });
+      return;
     }
-    canvas.toBlob(function (blob) {
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      var safeName = DATA.name.replace(/[^a-z0-9]+/gi, "_");
-      a.href = url;
-      a.download = safeName + "_resuelto.png";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
-    });
+    showToast("No se pudo copiar");
   });
 
   // ---------- toast ----------
