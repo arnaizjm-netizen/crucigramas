@@ -257,20 +257,6 @@
     display: none;
   }
   .win-banner.show { display: block; }
-  .feedback-box {
-    display: none;
-    width: 100%;
-    max-width: 640px;
-    box-sizing: border-box;
-    background: var(--panel-bg);
-    border: 1px solid var(--cell-border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-top: 12px;
-    text-align: center;
-  }
-  .feedback-box.show { display: block; }
-  .feedback-box p { margin: 0 0 10px; }
   /* votacion de dificultad: siempre visible al terminar, no se puede cambiar el voto */
   .dificultad-box {
     display: none;
@@ -471,10 +457,6 @@
   </div>
 
   <div class="win-banner" id="winBanner"></div>
-  <div class="feedback-box" id="feedbackBox">
-    <p>Espero que te haya gustado. Si quieres recibir otro como este, pulsa aquí.</p>
-    <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
-  </div>
 
 
   <p class="seo-note">Crucigrama online gratuito en español con juegos de palabras, dobles sentidos, cultura general y pistas con ingenio. Se juega directamente en el navegador y no requiere registro.</p>
@@ -1040,7 +1022,6 @@
     }
     document.getElementById("shareResultBtn").style.display = "none";
     document.getElementById("winBanner").classList.remove("show");
-    document.getElementById("feedbackBox").classList.remove("show");
     document.getElementById("dificultadBox").classList.remove("show");
     pauseTimer();
     renderTimer(0);
@@ -1259,7 +1240,6 @@
     banner.textContent = "Completado en " + pad(mm) + ":" + pad(ss) + ". Enhorabuena!";
     banner.classList.add("show");
     document.getElementById("shareResultBtn").style.display = "inline-block";
-    document.getElementById("feedbackBox").classList.add("show");
     document.getElementById("dificultadBox").classList.add("show");
     renderDificultad();
     saveState();
