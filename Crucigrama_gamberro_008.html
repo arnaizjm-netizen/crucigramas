@@ -268,9 +268,10 @@
   .completado-title { margin: 0 0 14px; font-size: 1.15rem; font-weight: 800; color: var(--accent-dark); }
   .dificultad-wrap { margin-bottom: 16px; }
   .dificultad-q { margin: 0 0 10px; font-size: 0.92rem; color: var(--muted); }
-  .dificultad-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  /* rejilla, no flex: con flex el boton de texto mas largo (tirarse de los pelos) se
+     ensanchaba mas que los otros dos; en columnas de igual ancho quedan proporcionados */
+  .dificultad-btns { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
   .dificultad-btn {
-    flex: 1 1 140px;
     font: inherit;
     font-weight: 700;
     padding: 12px 10px;
@@ -297,12 +298,19 @@
     padding-top: 14px;
     border-top: 1px solid rgba(0,0,0,0.08);
   }
+  /* la mas discreta de las cuatro acciones: enlace de texto, no un boton solido (chocaba
+     con los dos verdes de arriba y, al ir junto a la pregunta, no quedaba centrado) */
   .completado-feedback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     margin: 14px 0 0;
     padding-top: 12px;
     border-top: 1px solid rgba(0,0,0,0.08);
     font-size: 0.85rem;
   }
+  .quiero-mas-link { color: var(--accent-dark); font-weight: 700; text-decoration: underline; }
   .fin-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
   .fin-col[hidden] { display: none; }  /* el propio display:flex ganaba al atributo hidden */
   .fin-cap { font-size: 0.78rem; color: var(--muted); line-height: 1.1; text-align: center; }
@@ -352,7 +360,6 @@
     border-radius: 8px;
     padding: 10px 20px;
   }
-  .feedback-link-inline { margin: 6px 0 0 4px; }
   .toast {
     position: fixed;
     bottom: 20px;
@@ -429,6 +436,7 @@
     .completado-box { background: #163420; border-color: var(--win); }
     .completado-title { color: #bdeecb; }
     .completado-actions, .completado-feedback { border-top-color: rgba(255,255,255,0.12); }
+    .quiero-mas-link { color: #7fd19f; }
     .siguiente-toast p a { color: #7fd19f; }
     .ia-note { background: #163420; color: #ffa94d; }
   }
@@ -471,7 +479,7 @@
 
     <p class="completado-feedback">
       <span class="fin-cap">¿Te ha gustado?</span>
-      <a class="feedback-link feedback-link-inline" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
+      <a class="quiero-mas-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
     </p>
   </div>
 
