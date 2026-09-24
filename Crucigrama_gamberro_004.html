@@ -475,6 +475,30 @@
 
   var GAME_PREFIX = crucigramaCodigo(CRUCIGRAMA_NUM);
 
+  // ---------- atribucion de origen (Google Display) ----------
+  // Un unico evento por partida nueva, con el origen y el emplazamiento (utm_source/
+  // utm_placement) codificados en el path, junto al game_id -- igual que el resto de
+  // eventos de la partida. Con eso basta para, en la exportacion, cruzar por game_id y
+  // saber de que emplazamiento vino cada "empezado", "completado", etc.: no hace falta
+  // repetir el emplazamiento en cada evento ni guardarlo en localStorage.
+  // No se toca goatcounter.path ni el canonical: la vista de pagina normal (la que
+  // cuenta "cuanta gente juega a este crucigrama") sigue igual, sin fragmentarse.
+  // Solo se dispara en partidas nuevas (no en reanudaciones): un clic de Display que
+  // reabre una partida ya empezada en ese navegador no se reatribuye. Es un caso raro
+  // en trafico de Display (casi siempre es visita nueva) y se asume conscientemente.
+  function sanitizeUtm(v, maxLen) {
+    if (!v) return "";
+    return String(v).toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, maxLen);
+  }
+  function gcOrigenCampana() {
+    var params;
+    try { params = new URLSearchParams(location.search); } catch (e) { return; }
+    var source = sanitizeUtm(params.get("utm_source"), 40);
+    var placement = sanitizeUtm(params.get("utm_placement"), 60);
+    if (source !== "google_display" || !placement) return;
+    gcEventPartida("-origen-" + source + "-" + placement, "Origen: " + source + " / " + placement);
+  }
+
   (function showSavedUrl() {
     var canonical = document.querySelector('link[rel="canonical"]');
     var urlEl = document.getElementById("saveNoteUrl");
@@ -578,6 +602,7 @@
     }
   } else {
     state.gameId = GAME_PREFIX + randomPartidaCodigo();
+    gcOrigenCampana();
   }
 
   // ---------- construccion del tablero ----------
