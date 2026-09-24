@@ -271,6 +271,40 @@
   }
   .feedback-box.show { display: block; }
   .feedback-box p { margin: 0 0 10px; }
+  /* votacion de dificultad: siempre visible al terminar, no se puede cambiar el voto */
+  .dificultad-box {
+    display: none;
+    width: 100%;
+    max-width: 640px;
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--cell-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .dificultad-box.show { display: block; }
+  .dificultad-q { margin: 0 0 10px; font-size: 0.92rem; color: var(--muted); }
+  .dificultad-btns { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .dificultad-btn {
+    flex: 1 1 140px;
+    font: inherit;
+    font-weight: 700;
+    padding: 12px 10px;
+    border-radius: 8px;
+    border: 2px solid var(--cell-border);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .dificultad-btn[data-nivel="facil"] { border-color: var(--win); }
+  .dificultad-btn[data-nivel="normal"] { border-color: var(--empty-hint); }
+  .dificultad-btn[data-nivel="dificil"] { border-color: var(--danger); }
+  .dificultad-btn.chosen[data-nivel="facil"] { background: var(--win); color: #fff; }
+  .dificultad-btn.chosen[data-nivel="normal"] { background: var(--empty-hint); color: #1f2320; }
+  .dificultad-btn.chosen[data-nivel="dificil"] { background: var(--danger); color: #fff; }
+  .dificultad-btn:disabled { cursor: default; opacity: 0.55; }
   /* fila "Completado": pregunta + Quiero mas + Hall of Fame (a su derecha) */
   .fin-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 10px; }
   .fin-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -433,6 +467,15 @@
     <a class="feedback-link" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero más</a>
   </div>
 
+  <div class="dificultad-box" id="dificultadBox">
+    <p class="dificultad-q" id="dificultadQ">¿Qué tal de difícil te ha parecido?</p>
+    <div class="dificultad-btns">
+      <button type="button" class="dificultad-btn" data-nivel="facil">😌 Fácil</button>
+      <button type="button" class="dificultad-btn" data-nivel="normal">👌 En su punto</button>
+      <button type="button" class="dificultad-btn" data-nivel="dificil">🤯 Para tirarse de los pelos</button>
+    </div>
+  </div>
+
 
   <p class="seo-note">Crucigrama online gratuito en español con juegos de palabras, dobles sentidos, cultura general y pistas con ingenio. Se juega directamente en el navegador y no requiere registro.</p>
   <div class="site-footer"><a href="https://recreo.zone/?ref=crucigrama">RECREO.ZONE</a></div>
@@ -521,7 +564,8 @@
     gameId: null,        // identificador de partida (8 car.), ver documento de reanudaciones
     autoCheckDone: false, // el comprobar automatico (cuadricula llena con errores) ya salto en esta partida
     siguienteMostrado: false, // el aviso "quiero el siguiente" ya salio en esta partida
-    recordatorioIaMostrado: false // el recordatorio de la IA ya salio en esta partida
+    recordatorioIaMostrado: false, // el recordatorio de la IA ya salio en esta partida
+    dificultadVoto: null // "facil" | "normal" | "dificil" una vez votado; no se puede cambiar
   };
 
   for (var r = 0; r < N; r++) {
@@ -555,7 +599,8 @@
         gameId: state.gameId,
         autoCheckDone: state.autoCheckDone,
         siguienteMostrado: state.siguienteMostrado,
-        recordatorioIaMostrado: state.recordatorioIaMostrado
+        recordatorioIaMostrado: state.recordatorioIaMostrado,
+        dificultadVoto: state.dificultadVoto
       }));
     } catch (e) { /* almacenamiento no disponible: se ignora */ }
   }
@@ -588,6 +633,7 @@
     state.autoCheckDone = !!saved.autoCheckDone;
     state.siguienteMostrado = !!saved.siguienteMostrado;
     state.recordatorioIaMostrado = !!saved.recordatorioIaMostrado;
+    state.dificultadVoto = (typeof saved.dificultadVoto === "string") ? saved.dificultadVoto : null;
   }
 
   loadState();
@@ -976,6 +1022,7 @@
     state.finalElapsedMs = null;
     state.paused = false;
     state.gameId = GAME_PREFIX + randomPartidaCodigo();
+    state.dificultadVoto = null;
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
     state.recordatorioIaMostrado = false;
@@ -994,6 +1041,7 @@
     document.getElementById("shareResultBtn").style.display = "none";
     document.getElementById("winBanner").classList.remove("show");
     document.getElementById("feedbackBox").classList.remove("show");
+    document.getElementById("dificultadBox").classList.remove("show");
     pauseTimer();
     renderTimer(0);
     pauseBtn.style.display = "";
@@ -1212,6 +1260,8 @@
     banner.classList.add("show");
     document.getElementById("shareResultBtn").style.display = "inline-block";
     document.getElementById("feedbackBox").classList.add("show");
+    document.getElementById("dificultadBox").classList.add("show");
+    renderDificultad();
     saveState();
     if (isNewCompletion) {
       // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
@@ -1249,6 +1299,36 @@
     }
     showToast("No se pudo copiar");
   });
+
+  // ---------- votacion de dificultad ----------
+  // Siempre visible al terminar (tambien al reabrir una partida ya acabada). El voto
+  // no se puede cambiar: una vez emitido, los tres botones quedan deshabilitados y el
+  // elegido se marca. Un unico evento por partida, con el nivel en el path.
+  var DIFICULTAD_LABELS = { facil: "Fácil", normal: "En su punto", dificil: "Para tirarse de los pelos" };
+  function renderDificultad() {
+    var votado = state.dificultadVoto;
+    var q = document.getElementById("dificultadQ");
+    q.textContent = votado ? "Tu voto: " + DIFICULTAD_LABELS[votado] : "¿Qué tal de difícil te ha parecido?";
+    var btns = document.querySelectorAll(".dificultad-btn");
+    for (var i = 0; i < btns.length; i++) {
+      var nivel = btns[i].getAttribute("data-nivel");
+      btns[i].disabled = !!votado;
+      btns[i].classList.toggle("chosen", votado === nivel);
+    }
+  }
+  (function () {
+    var btns = document.querySelectorAll(".dificultad-btn");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function () {
+        if (state.dificultadVoto) return;   // no se puede cambiar el voto
+        var nivel = this.getAttribute("data-nivel");
+        state.dificultadVoto = nivel;
+        saveState();
+        renderDificultad();
+        gcEventPartida("-dificultad-" + nivel, "Dificultad: " + DIFICULTAD_LABELS[nivel]);
+      });
+    }
+  })();
 
   // ---------- toast ----------
   var toastEl = document.getElementById("toastEl");
