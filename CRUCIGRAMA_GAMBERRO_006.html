@@ -289,7 +289,42 @@
   .completado-btn img { width: 28px; height: 28px; display: block; }
   #hofEnterBtn, #shareResultBtn { background: var(--win); }
   #quieroOtroBtn { background: var(--empty-hint); color: #1f2320; }
+  #quieroOtroBtn:disabled { opacity: 0.6; cursor: default; }
   #hofEnterBtn[hidden] { display: none; }  /* [hidden] no gana por si solo a display:inline-flex */
+
+  /* panel de suscripcion ("Quiero otro"): aparece bajo la fila de acciones al pulsar el boton */
+  .quiero-otro-panel { margin-bottom: 16px; }
+  .quiero-otro-input {
+    font: inherit;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 2px solid var(--cell-border);
+    background: var(--panel-bg);
+    color: var(--text);
+    width: 100%;
+    max-width: 260px;
+    box-sizing: border-box;
+    margin-bottom: 8px;
+  }
+  .quiero-otro-input.valid { border-color: var(--win); }
+  .quiero-otro-input.invalid { border-color: var(--danger); }
+  .quiero-otro-submit {
+    display: block;
+    margin: 0 auto;
+    font: inherit;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: none;
+    background: var(--empty-hint);
+    color: #1f2320;
+    cursor: pointer;
+  }
+  .quiero-otro-submit:disabled { opacity: 0.6; cursor: default; }
+  .quiero-otro-input[hidden], .quiero-otro-submit[hidden] { display: none; }  /* [hidden] no gana por si solo a display:block */
+  .quiero-otro-msg { margin: 8px 0 0; font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }
+  .quiero-otro-msg.ok { color: var(--win); font-weight: 700; }
+  .quiero-otro-msg.err { color: var(--danger); font-weight: 700; }
   /* aviso visual al terminar: onda que se apaga, 3 veces */
   #hofEnterBtn.attn { animation: hofPulse 1.3s ease-out 3; }
   @keyframes hofPulse {
@@ -451,7 +486,13 @@
     <div class="completado-actions">
       <button type="button" class="completado-btn" id="hofEnterBtn" hidden><img id="hofIcon" width="28" height="28" alt="">Hall of Fame</button>
       <button type="button" class="completado-btn" id="shareResultBtn">Compartir resultado</button>
-      <a class="completado-btn" id="quieroOtroBtn" href="https://forms.gle/uaAjqZdS5TLsL7Yt9" target="_blank" rel="noopener">Quiero otro</a>
+      <button type="button" class="completado-btn" id="quieroOtroBtn">Quiero otro</button>
+    </div>
+
+    <div class="quiero-otro-panel" id="quieroOtroPanel" hidden>
+      <input type="email" id="quieroOtroEmail" class="quiero-otro-input" placeholder="tu@email.com" autocomplete="email" inputmode="email">
+      <button type="button" class="quiero-otro-submit" id="quieroOtroSubmit">Avísame, por favor</button>
+      <p class="quiero-otro-msg" id="quieroOtroMsg" aria-live="polite"></p>
     </div>
 
     <div class="dificultad-wrap">
@@ -1192,9 +1233,76 @@
   }
   document.getElementById("hofEnterBtn").addEventListener("click", hofEnter);
 
-  document.getElementById("quieroOtroBtn").addEventListener("click", function () {
-    gcEventPartida("-quiero-otro", "Quiero otro");
-  });
+  // ---------- Quiero otro: suscripcion por correo (Apps Script, sin publicar la lista) ----------
+  // Doc: Herramientas/docs/SUSCRIPCIONES.md
+  var QUIERO_OTRO_URL = "https://script.google.com/macros/s/AKfycbzdT861LeRF10cIjYhGZSR8Lmj5MV_1t1aIF0_gnprljwpRC5OuzZK_iQt-YhqY3ZTLQA/exec";
+  (function () {
+    var toggleBtn = document.getElementById("quieroOtroBtn");
+    var panel = document.getElementById("quieroOtroPanel");
+    var emailInput = document.getElementById("quieroOtroEmail");
+    var submitBtn = document.getElementById("quieroOtroSubmit");
+    var msgEl = document.getElementById("quieroOtroMsg");
+
+    function isValidEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+
+    toggleBtn.addEventListener("click", function () {
+      gcEventPartida("-quiero-otro", "Quiero otro");
+      panel.hidden = false;
+      toggleBtn.disabled = true;
+      emailInput.focus();
+    });
+
+    emailInput.addEventListener("input", function () {
+      var v = emailInput.value.trim();
+      emailInput.classList.remove("valid", "invalid");
+      if (v) emailInput.classList.add(isValidEmail(v) ? "valid" : "invalid");
+      msgEl.textContent = "";
+      msgEl.className = "quiero-otro-msg";
+    });
+
+    emailInput.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") submitBtn.click();
+    });
+
+    submitBtn.addEventListener("click", function () {
+      var email = emailInput.value.trim();
+      if (!isValidEmail(email)) {
+        emailInput.classList.add("invalid");
+        msgEl.textContent = "Revisa el correo, no tiene buena pinta.";
+        msgEl.className = "quiero-otro-msg err";
+        return;
+      }
+      submitBtn.disabled = true;
+      emailInput.disabled = true;
+      msgEl.textContent = "Enviando...";
+      msgEl.className = "quiero-otro-msg";
+      fetch(QUIERO_OTRO_URL, {
+        method: "POST",
+        body: JSON.stringify({ email: email })
+      }).then(function (r) { return r.json(); }).then(function (data) {
+        if (data.status === "existing") {
+          msgEl.textContent = "Ya estabas suscrito, ¡gracias!";
+          msgEl.className = "quiero-otro-msg ok";
+          gcEventPartida("-quiero-otro-existente", "Quiero otro: ya suscrito");
+        } else if (data.status === "new") {
+          msgEl.textContent = "Has quedado suscrito, ¡gracias!";
+          msgEl.className = "quiero-otro-msg ok";
+          gcEventPartida("-quiero-otro-nuevo", "Quiero otro: suscrito");
+        } else {
+          throw new Error("bad status");
+        }
+        emailInput.hidden = true;
+        submitBtn.hidden = true;
+      }).catch(function () {
+        msgEl.textContent = "No se ha podido enviar. Inténtalo de nuevo en un momento.";
+        msgEl.className = "quiero-otro-msg err";
+        submitBtn.disabled = false;
+        emailInput.disabled = false;
+      });
+    });
+  })();
 
   function hofEnter() {
     var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
