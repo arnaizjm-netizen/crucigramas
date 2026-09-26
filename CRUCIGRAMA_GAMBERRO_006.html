@@ -1162,31 +1162,36 @@
   // titulo, todos los abandonos de un mismo crucigrama se verian siempre
   // con el titulo del primero que se registro, por mucho que cada uno
   // mandara un valor distinto. El path si se guarda integro por cada hit.
-  var lastAbandonSnapshot = null;
-  function buildGridSnapshot() {
-    // solo casillas jugables (blancas): el patron de negras ya es un dato
-    // publico del propio crucigrama, no hace falta repetirlo aqui.
+  //
+  // FOTO: convencion general para representar una cuadricula como string
+  // (un caracter por cada posicion fisica, en orden de lectura: "-" negra,
+  // "_" blanca vacia, la letra en los demas casos). No es especifica de
+  // GoatCounter ni del abandono -- ver docs/FOTO_CUADRICULA.md. El prefijo
+  // "v2-" de mas abajo es solo el marcador de version dentro del PATH de
+  // GoatCounter, para distinguir FOTO del formato historico (que omitia
+  // las negras); no forma parte de FOTO en si.
+  var lastAbandonFoto = null;
+  function buildFoto() {
     var out = "";
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
-        if (DATA.black[r][c]) continue;
-        out += state.grid[r][c] || "_";
+        out += DATA.black[r][c] ? "-" : (state.grid[r][c] || "_");
       }
     }
     return out;
   }
   function reportAbandon() {
     if (state.finished || !state.started) return;
-    var snap = buildGridSnapshot();
-    if (snap === lastAbandonSnapshot) return;
-    lastAbandonSnapshot = snap;
+    var foto = buildFoto();
+    if (foto === lastAbandonFoto) return;
+    lastAbandonFoto = foto;
     if (window.goatcounter && window.goatcounter.count) {
       var base = location.pathname.replace(/\/$/, "") + (state.gameId ? "-" + state.gameId : "");
       // evento simple, para ver de un vistazo el recuento total en el panel
       window.goatcounter.count({ path: base + "-abandona", event: true });
-      // evento con la foto de la cuadricula codificada en el path
+      // evento con la foto de la cuadricula codificada en el path (FOTO, con marcador de version)
       window.goatcounter.count({
-        path: base + "-abandona-datos-" + snap,
+        path: base + "-abandona-datos-v2-" + foto,
         title: "Foto de cuadricula al abandonar",
         event: true,
       });
