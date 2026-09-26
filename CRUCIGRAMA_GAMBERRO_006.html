@@ -1313,7 +1313,7 @@
       tiempo_s: Math.floor(ms / 1000)
     };
     try { sessionStorage.setItem("hof_claim", JSON.stringify(claim)); } catch (e) { /* sin sessionStorage: solo vista publica */ }
-    var go = function () { location.href = "/hall-of-fame.html?crossword=" + claim.crossword_id; };
+    var go = function () { window.open("/hall-of-fame.html?crossword=" + claim.crossword_id, "_blank"); };
     // el evento tiene que salir antes de abandonar la pagina
     var tries = 0;
     (function attempt() {
