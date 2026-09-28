@@ -183,9 +183,32 @@
   }
   .next-signup p { color: var(--muted); font-size: 0.92rem; max-width: 440px; margin: 10px auto 0; }
   .next-signup p a { color: var(--accent-dark); }
+  .signup-form { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+  .signup-input {
+    font: inherit;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 2px solid #c9cbc6;
+    background: var(--panel-bg);
+    color: var(--text);
+    flex: 1 1 200px;
+    max-width: 260px;
+    min-width: 0;
+  }
+  .signup-input.valid { border-color: var(--accent); }
+  .signup-input.invalid { border-color: #c0392b; }
+  .signup-form[hidden] { display: none; }
+  .signup-msg { min-height: 1.2em; margin: 8px auto 0; font-size: 0.88rem; }
+  .signup-msg.ok { color: var(--accent); font-weight: 700; }
+  .signup-msg.err { color: #c0392b; font-weight: 700; }
+  .next-signup .signup-nota { font-size: 0.78rem; margin-top: 2px; }
+  .signup-nota[hidden] { display: none; }
+  .next-btn:disabled { opacity: 0.6; cursor: default; }
   .next-btn {
     display: inline-block;
-    margin-top: 16px;
+    font: inherit;
+    border: none;
+    cursor: pointer;
     background: var(--accent-dark);
     color: #fff;
     text-decoration: none;
@@ -213,7 +236,10 @@
       --muted: #9a9d99;
     }
     .current-grid, .prev-item img { background: #fdfdfb; }
-    .brand-name, .next-signup p a { color: #7fd19f; }
+    .brand-name, .next-signup p a, .signup-msg.ok { color: #7fd19f; }
+    .signup-input { border-color: #4a4e4c; }
+    .signup-input.valid { border-color: #7fd19f; }
+    .signup-msg.err, .signup-input.invalid { color: #ff8a7a; border-color: #ff8a7a; }
   }
 </style>
 </head>
@@ -269,10 +295,13 @@
 
     <section class="next-signup">
       <h2>¿Quieres el siguiente?</h2>
-      <p>Si quieres que te avise cuando publique otro Crucigrama Gamberro, escríbeme a
-        <a id="emailLink" href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101;">&#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101;</a></p>
-      <a class="next-btn" id="nextBtn"
-         href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101;?subject=Quiero%20el%20siguiente&body=Av%C3%ADsame%20cuando%20salga%20el%20pr%C3%B3ximo%20Crucigrama%20Gamberro.">QUIERO EL SIGUIENTE</a>
+      <p>Salen de vez en cuando. <strong>Déjame tu correo y te aviso cuando publique otro Crucigrama Gamberro.</strong></p>
+      <div class="signup-form" id="signupForm">
+        <input type="email" id="signupEmail" class="signup-input" placeholder="tu@email.com" autocomplete="email" inputmode="email" aria-label="Tu correo">
+        <button type="button" class="next-btn" id="nextBtn">AVÍSAME</button>
+      </div>
+      <p class="signup-msg" id="signupMsg" aria-live="polite"></p>
+      <p class="signup-nota" id="signupNota">Solo para eso. Sin spam, y te das de baja cuando quieras.</p>
     </section>
   </main>
 
@@ -325,11 +354,58 @@
   });
 
   function noop() {}
-  document.getElementById("nextBtn").addEventListener("click", function () {
-    gcSendThen("/home-quiero-siguiente", "Portada: QUIERO EL SIGUIENTE", noop);
+
+  // Suscripcion: mismo Apps Script que "Quiero otro" en los crucigramas
+  // (doc: Herramientas/docs/SUSCRIPCIONES.md)
+  var SUSCRIPCION_URL = "https://script.google.com/macros/s/AKfycbzdT861LeRF10cIjYhGZSR8Lmj5MV_1t1aIF0_gnprljwpRC5OuzZK_iQt-YhqY3ZTLQA/exec";
+  var form = document.getElementById("signupForm");
+  var emailInput = document.getElementById("signupEmail");
+  var submitBtn = document.getElementById("nextBtn");
+  var msgEl = document.getElementById("signupMsg");
+  function isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+  function setMsg(text, cls) { msgEl.textContent = text; msgEl.className = "signup-msg" + (cls ? " " + cls : ""); }
+
+  emailInput.addEventListener("input", function () {
+    var v = emailInput.value.trim();
+    emailInput.classList.remove("valid", "invalid");
+    if (v) emailInput.classList.add(isValidEmail(v) ? "valid" : "invalid");
+    setMsg("");
   });
-  document.getElementById("emailLink").addEventListener("click", function () {
-    gcSendThen("/home-email", "Portada: correo", noop);
+  emailInput.addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter") submitBtn.click();
+  });
+  submitBtn.addEventListener("click", function () {
+    var email = emailInput.value.trim();
+    if (!isValidEmail(email)) {
+      emailInput.classList.add("invalid");
+      setMsg(email ? "Revisa el correo, no tiene buena pinta." : "Escribe tu correo y te aviso.", "err");
+      emailInput.focus();
+      return;
+    }
+    gcSendThen("/home-quiero-siguiente", "Portada: QUIERO EL SIGUIENTE", noop);
+    submitBtn.disabled = true;
+    emailInput.disabled = true;
+    setMsg("Enviando...");
+    fetch(SUSCRIPCION_URL, {
+      method: "POST",
+      body: JSON.stringify({ email: email })
+    }).then(function (r) { return r.json(); }).then(function (data) {
+      if (data.status === "existing") {
+        setMsg("Ya estabas suscrito, ¡gracias!", "ok");
+        gcSendThen("/home-suscrito-existente", "Portada: ya suscrito", noop);
+      } else if (data.status === "new") {
+        setMsg("Has quedado suscrito, ¡gracias!", "ok");
+        gcSendThen("/home-suscrito-nuevo", "Portada: suscrito", noop);
+      } else {
+        throw new Error("bad status");
+      }
+      form.hidden = true;
+      document.getElementById("signupNota").hidden = true;
+    }).catch(function () {
+      setMsg("No se ha podido enviar. Inténtalo de nuevo en un momento.", "err");
+      submitBtn.disabled = false;
+      emailInput.disabled = false;
+    });
   });
 })();
 </script>

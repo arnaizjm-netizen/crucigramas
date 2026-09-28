@@ -329,6 +329,11 @@
   .quiero-otro-msg { margin: 8px 0 0; font-size: 0.85rem; color: var(--muted); min-height: 1.2em; }
   .quiero-otro-msg.ok { color: var(--win); font-weight: 700; }
   .quiero-otro-msg.err { color: var(--danger); font-weight: 700; }
+  .quiero-otro-intro { margin: 0 auto 10px; max-width: 340px; font-size: 0.92rem; line-height: 1.35; }
+  .quiero-otro-nota { margin: 2px 0 0; font-size: 0.78rem; color: var(--muted); }
+  .quiero-otro-nota[hidden] { display: none; }
+  .quiero-otro-mas { margin: 12px 0 0; font-size: 0.88rem; }
+  .quiero-otro-mas a { color: var(--accent-dark); font-weight: 700; }
   /* aviso visual al terminar: onda que se apaga, 3 veces */
   #hofEnterBtn.attn { animation: hofPulse 1.3s ease-out 3; }
   @keyframes hofPulse {
@@ -375,7 +380,7 @@
     margin: 18px 0 8px;
     font-size: 0.85rem;
   }
-  .site-footer a { color: var(--muted); text-decoration: none; }
+  .site-footer a { color: var(--accent-dark); font-weight: 700; text-decoration: none; }
   .site-footer a:hover { text-decoration: underline; }
   .feedback-link {
     display: inline-block;
@@ -462,14 +467,14 @@
     .completado-box { background: #163420; border-color: var(--win); }
     .completado-title { color: #bdeecb; }
     .dificultad-wrap { border-top-color: rgba(255,255,255,0.12); }
-    .home-link { color: #7fd19f; }
-    .siguiente-toast p a { color: #7fd19f; }
+    .home-link, .site-footer a { color: #7fd19f; }
+    .siguiente-toast p a, .quiero-otro-mas a { color: #7fd19f; }
     .ia-note { background: #163420; color: #ffa94d; }
   }
 </style>
 </head>
 <body>
-  <a class="home-link" href="https://recreo.zone/?ref=crucigrama">← RECREO.ZONE</a>
+  <a class="home-link" href="https://recreo.zone/?ref=crucigrama">← Más crucigramas gamberros en RECREO.ZONE</a>
   <h1 id="titleEl">Crucigrama Gamberro 005</h1>
   <div class="ia-note" id="iaNote">Pide ayuda a tu IA favorita (en caso de necesidad): clic en la definición para copiarla.</div>
   <div class="save-note" id="saveNote">💾 Tu progreso se guarda solo — vuelve cuando quieras a <span id="saveNoteUrl"></span></div>
@@ -494,9 +499,12 @@
     </div>
 
     <div class="quiero-otro-panel" id="quieroOtroPanel" hidden>
+      <p class="quiero-otro-intro">Salen de vez en cuando.<br><strong>Déjame tu correo y te aviso cuando publique el siguiente.</strong></p>
       <input type="email" id="quieroOtroEmail" class="quiero-otro-input" placeholder="tu@email.com" autocomplete="email" inputmode="email">
-      <button type="button" class="quiero-otro-submit" id="quieroOtroSubmit">Avísame, por favor</button>
+      <button type="button" class="quiero-otro-submit" id="quieroOtroSubmit">Avísame</button>
       <p class="quiero-otro-msg" id="quieroOtroMsg" aria-live="polite"></p>
+      <p class="quiero-otro-nota" id="quieroOtroNota">Solo para eso. Sin spam, y te das de baja cuando quieras.</p>
+      <p class="quiero-otro-mas">¿No puedes esperar? <a id="quieroOtroMas" href="https://recreo.zone/?ref=quiero-otro">Hay más crucigramas en RECREO.ZONE →</a></p>
     </div>
 
     <div class="dificultad-wrap">
@@ -520,7 +528,7 @@
 
 
   <p class="seo-note">Crucigrama online gratuito en español con juegos de palabras, dobles sentidos, cultura general y pistas con ingenio. Se juega directamente en el navegador y no requiere registro.</p>
-  <div class="site-footer"><a href="https://recreo.zone/?ref=crucigrama">RECREO.ZONE</a></div>
+  <div class="site-footer"><a href="https://recreo.zone/?ref=crucigrama-pie">Más crucigramas gamberros en RECREO.ZONE →</a></div>
 
   <div class="toast" id="toastEl"></div>
 
@@ -1243,6 +1251,10 @@
     var submitBtn = document.getElementById("quieroOtroSubmit");
     var msgEl = document.getElementById("quieroOtroMsg");
 
+    document.getElementById("quieroOtroMas").addEventListener("click", function () {
+      gcEventPartida("-quiero-otro-web", "Quiero otro: ir a la web");
+    });
+
     function isValidEmail(v) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
     }
@@ -1295,6 +1307,7 @@
         }
         emailInput.hidden = true;
         submitBtn.hidden = true;
+        document.getElementById("quieroOtroNota").hidden = true;
       }).catch(function () {
         msgEl.textContent = "No se ha podido enviar. Inténtalo de nuevo en un momento.";
         msgEl.className = "quiero-otro-msg err";
