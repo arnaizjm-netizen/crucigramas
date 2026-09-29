@@ -55,6 +55,8 @@
   p.all { margin: 12px 0 0; font-size: 0.9rem; }
   p.all a { color: var(--link); text-decoration: none; }
   p.all a:hover { text-decoration: underline; }
+  /* vista publica: como se entra (no sale en la pantalla HONOR/iniciales ni tras publicar) */
+  p.howto { margin: 10px 0 0; font-size: 0.85rem; color: var(--muted); }
 
   .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin: 6px 0 12px; }
   .card {
@@ -142,6 +144,7 @@
     </div>
     <div class="sim" id="simBanner" hidden>Modo simulado: los resultados se guardan solo en este navegador.</div>
     <p class="all" id="allLink" hidden><a href="hall-of-fame.html">← Todos los Hall of Fame</a></p>
+    <p class="howto" id="howTo" hidden>Para entrar, resuelve el crucigrama completo y pulsa 🏆 al terminar.</p>
   </header>
 
   <section class="gallery" id="galleryBox" hidden>
@@ -217,7 +220,7 @@ var AUTOR_TIEMPOS = { "002": 176, "003": 184, "004": 179, "005": 187, "006": 181
 var AUTOR_MARCAS = { "006": "20/09/2026 5:35:05" };
 
 /* Crucigramas con Hall of Fame (002 en adelante); lo genera generate_homepage.py */
-var CROSSWORDS = [{"num": "002", "name": "Crucigrama Gamberro 002", "archivo": "Crucigrama_Gamberro_002.html", "casillas": 120, "storage_key": "crossword_state_cw_3dc0acd50e52", "miniatura": "miniaturas/hof/hof_002.png"}, {"num": "003", "name": "Crucigrama Gamberro 003", "archivo": "Crucigrama_gamberro_003.html", "casillas": 119, "storage_key": "crossword_state_cw_e3b69d6ff018", "miniatura": "miniaturas/hof/hof_003.png"}, {"num": "004", "name": "Crucigrama Gamberro 004", "archivo": "Crucigrama_gamberro_004.html", "casillas": 119, "storage_key": "crossword_state_cw_5bbe027f61ef", "miniatura": "miniaturas/hof/hof_004.png"}, {"num": "005", "name": "Crucigrama Gamberro 005", "archivo": "Crucigrama_Gamberro_005.html", "casillas": 120, "storage_key": "crossword_state_cw_19934509fd06", "miniatura": "miniaturas/hof/hof_005.png"}, {"num": "006", "name": "Crucigrama Gamberro 006", "archivo": "CRUCIGRAMA_GAMBERRO_006.html", "casillas": 117, "storage_key": "crossword_state_cw_52cb41a0a981", "miniatura": "miniaturas/hof/hof_006.png"}, {"num": "008", "name": "Crucigrama gamberro 008", "archivo": "Crucigrama_gamberro_008.html", "casillas": 120, "storage_key": "crossword_state_cw_217717b30ddc", "miniatura": "miniaturas/hof/hof_008.png"}, {"num": "009", "name": "Crucigrama gamberro - 009", "archivo": "Crucigrama_gamberro_009.html", "casillas": 115, "storage_key": "crossword_state_cw_829d55cd22e7", "miniatura": "miniaturas/hof/hof_009.png"}];
+var CROSSWORDS = [{"num": "002", "name": "Crucigrama Gamberro 002", "archivo": "Crucigrama_Gamberro_002.html", "casillas": 120, "storage_key": "crossword_state_cw_3dc0acd50e52", "miniatura": "miniaturas/hof/hof_002.png"}, {"num": "003", "name": "Crucigrama Gamberro 003", "archivo": "Crucigrama_gamberro_003.html", "casillas": 119, "storage_key": "crossword_state_cw_e3b69d6ff018", "miniatura": "miniaturas/hof/hof_003.png"}, {"num": "004", "name": "Crucigrama Gamberro 004", "archivo": "Crucigrama_gamberro_004.html", "casillas": 119, "storage_key": "crossword_state_cw_5bbe027f61ef", "miniatura": "miniaturas/hof/hof_004.png"}, {"num": "005", "name": "Crucigrama Gamberro 005", "archivo": "Crucigrama_Gamberro_005.html", "casillas": 120, "storage_key": "crossword_state_cw_19934509fd06", "miniatura": "miniaturas/hof/hof_005.png"}, {"num": "006", "name": "Crucigrama Gamberro 006", "archivo": "CRUCIGRAMA_GAMBERRO_006.html", "casillas": 117, "storage_key": "crossword_state_cw_52cb41a0a981", "miniatura": "miniaturas/hof/hof_006.png"}, {"num": "008", "name": "Crucigrama gamberro 008", "archivo": "Crucigrama_gamberro_008.html", "casillas": 120, "storage_key": "crossword_state_cw_217717b30ddc", "miniatura": "miniaturas/hof/hof_008.png"}, {"num": "009", "name": "Crucigrama gamberro - 009", "archivo": "Crucigrama_gamberro_009.html", "casillas": 115, "storage_key": "crossword_state_cw_829d55cd22e7", "miniatura": "miniaturas/hof/hof_009.png"}, {"num": "010", "name": "Crucigrama gamberro - 010", "archivo": "Crucigrama_gamberro_010.html", "casillas": 116, "storage_key": "crossword_state_cw_9bed6c78ebd6", "miniatura": "miniaturas/hof/hof_010.png"}];
 
 /* ------------------------------------------------------------------ utilidades */
 var ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -506,6 +509,14 @@ function hofGetClaim(cw) {
   return { crossword_id: cw.num, game_id: claim.game_id, tiempo_s: t };
 }
 
+/* Quien acaba de publicar este crucigrama (su reclamacion sigue en sessionStorage y ya
+   consta como publicada) no necesita la instruccion de como entrar. */
+function hofJustPublished(cw) {
+  var claim;
+  try { claim = JSON.parse(sessionStorage.getItem("hof_claim")); } catch (e) { return false; }
+  return !!claim && claim.crossword_id === cw.num && hofIsPublished(claim.game_id);
+}
+
 function hofShowStage(name) {
   ["stageHonor", "stageIni", "stageDone"].forEach(function (id) { $(id).hidden = (id !== name); });
 }
@@ -612,6 +623,7 @@ function hofGallery() {
   $("backBox").hidden = true;
   $("allLink").hidden = true;
   $("hofSub").textContent = "Elige un crucigrama para ver quién lo ha resuelto";
+  $("howTo").hidden = false;
   document.title = "Hall of Fame | RECREO.ZONE";
   if (HOF_MODE === "simulado") $("simBanner").hidden = false;
 
@@ -677,6 +689,7 @@ function hofInit() {
   if (HOF_MODE === "simulado") $("simBanner").hidden = false;
 
   hofSetupPublish(hofCw);
+  $("howTo").hidden = !!hofClaim || hofJustPublished(hofCw);   // solo en la vista publica
   hofRefreshRanking(hofCw);
 }
 hofInit();
