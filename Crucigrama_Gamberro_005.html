@@ -592,6 +592,50 @@
     gcEventPartida("-origen-" + source + "-" + placement, "Origen: " + source + " / " + placement);
   }
 
+  // ---------- historial previo del navegador (ver docs/TELEMETRIA_HISTORIAL.md) ----------
+  // Se calcula una sola vez, al enviar "-empezado", leyendo las partidas de los demas
+  // crucigramas que el juego ya guarda en localStorage (todas las paginas comparten
+  // origen). No se guarda nada nuevo: el valor queda fijado porque "-empezado" solo se
+  // envia una vez por partida, y el "-completado" se cruza con el por game_id.
+  //   previas: crucigramas con al menos una letra escrita (una visita no cuenta)
+  //   terminadas: crucigramas terminados (una clave por crucigrama: repetir no suma)
+  //   maxterminado: numero mas alto terminado, 3 cifras (0 si ninguno)
+  //   anterior: si/no, el crucigrama publicado justo antes (ANTERIOR_NUM) consta terminado
+  var ANTERIOR_NUM = 4;   // lo pone generate_crossword.py (0 = no hay)
+  var STORAGE_PREFIX = "crossword_state_";
+
+  function numeroDeGameId(gameId) {
+    if (typeof gameId !== "string" || gameId.length !== 8) return 0;
+    var hi = ID_ALPHABET.indexOf(gameId.charAt(0)), lo = ID_ALPHABET.indexOf(gameId.charAt(1));
+    return (hi < 0 || lo < 0) ? 0 : hi * 64 + lo + 1;
+  }
+
+  function historialSufijo() {
+    var previas = 0, terminadas = 0, maxTerminado = 0, anterior = false;
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (!key || key.indexOf(STORAGE_PREFIX) !== 0 || key === STORAGE_KEY) continue;
+        var s;
+        try { s = JSON.parse(localStorage.getItem(key)); } catch (e) { continue; }
+        if (!s) continue;
+        var conLetras = !!s.started || (Array.isArray(s.grid) && s.grid.some(function (row) {
+          return Array.isArray(row) && row.some(function (v) { return !!v; });
+        }));
+        if (!conLetras && !s.finished) continue;
+        previas++;
+        if (!s.finished) continue;
+        terminadas++;
+        var num = numeroDeGameId(s.gameId);
+        if (num > maxTerminado) maxTerminado = num;
+        if (ANTERIOR_NUM && num === ANTERIOR_NUM) anterior = true;
+      }
+    } catch (e) { /* almacenamiento no disponible: se envia como navegador sin historial */ }
+    var max3 = maxTerminado ? ("00" + maxTerminado).slice(-3) : "0";
+    return "-previas-" + previas + "-terminadas-" + terminadas +
+      "-maxterminado-" + max3 + "-anterior-" + (anterior ? "si" : "no");
+  }
+
   (function showSavedUrl() {
     var canonical = document.querySelector('link[rel="canonical"]');
     var urlEl = document.getElementById("saveNoteUrl");
@@ -1056,6 +1100,7 @@
     state.finalElapsedMs = null;
     state.paused = false;
     state.gameId = GAME_PREFIX + randomPartidaCodigo();
+    state.started = false;   // partida nueva: su primera letra envia su propio "-empezado"
     state.dificultadVoto = null;
     defsShownCount = 0;
     ayudaUsadaEstaPartida = false;
@@ -1590,7 +1635,7 @@
             if (hasAny) ensureTimerRunning();
             if (!state.started) {
               state.started = true;
-              gcEventPartida("-empezado", "Crucigrama empezado");
+              gcEventPartida("-empezado" + historialSufijo(), "Crucigrama empezado");
             }
             (function () {
               var hSeg = DATA.cellSegH[r][c], vSeg = DATA.cellSegV[r][c];
