@@ -600,8 +600,8 @@
   //   previas: crucigramas con al menos una letra escrita (una visita no cuenta)
   //   terminadas: crucigramas terminados (una clave por crucigrama: repetir no suma)
   //   maxterminado: numero mas alto terminado, 3 cifras (0 si ninguno)
-  //   anterior: si/no, el crucigrama publicado justo antes (ANTERIOR_NUM) consta terminado
-  var ANTERIOR_NUM = 1;   // lo pone generate_crossword.py (0 = no hay)
+  //   anterior: si/no, el crucigrama hecho publico justo antes (ANTERIOR_NUM) consta terminado
+  var ANTERIOR_NUM = 0;   // lo pone generate_crossword.py (0 = no hay)
   var STORAGE_PREFIX = "crossword_state_";
 
   function numeroDeGameId(gameId) {
