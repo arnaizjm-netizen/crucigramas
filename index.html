@@ -18,13 +18,13 @@
 <meta property="og:title" content="Crucigramas gamberros online | RECREO.ZONE">
 <meta property="og:description" content="Crucigramas online en español con ingenio, juegos de palabras, dobles sentidos y cultura general.">
 <meta property="og:url" content="https://recreo.zone/">
-<meta property="og:image" content="https://recreo.zone/og/og_008.png">
+<meta property="og:image" content="https://recreo.zone/og/og_009.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Crucigramas gamberros online | RECREO.ZONE">
 <meta name="twitter:description" content="Crucigramas online en español con ingenio, juegos de palabras, dobles sentidos y cultura general.">
-<meta name="twitter:image" content="https://recreo.zone/og/og_008.png">
+<meta name="twitter:image" content="https://recreo.zone/og/og_009.png">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -108,21 +108,20 @@
     font-size: 0.88rem;
     margin: 6px 0 0;
   }
+  /* todos los anteriores al actual: rejilla que pasa a varias filas (dos columnas en el movil) */
   .previous-list {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
     gap: 18px;
     margin-top: 18px;
   }
-  @media (min-width: 700px) {
-    .previous-list { flex-direction: row; justify-content: center; }
-  }
-  .prev-item { margin: 0; text-align: center; }
-  .prev-item img { max-width: 160px; height: auto; border-radius: 4px; }
+  .prev-item { margin: 0; text-align: center; width: 190px; max-width: calc(50% - 9px); }
+  .prev-item img { max-width: 100%; height: auto; border-radius: 4px; }
+  figure.prev-item img { width: 160px; margin-top: 12px; }
   .prev-item figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--muted); }
   /* los anteriores publicos se pueden jugar desde la portada; los privados son solo una miniatura */
-  .prev-item-play { width: 190px; max-width: 100%; }
   /* tarjeta-boton: miniatura + barra verde "JUGAR" pegada abajo; se ve y se siente clicable */
   .prev-link {
     display: block;
@@ -253,32 +252,10 @@
   <main>
     <section class="current">
       <h1>Crucigrama Gamberro</h1>
-      <p class="crossword-number">Nº 008</p>
-      <img class="current-grid" src="miniaturas/miniatura_008.png" alt="Cuadrícula vacía del Crucigrama Gamberro 008">
+      <p class="crossword-number">Nº 009</p>
+      <img class="current-grid" src="miniaturas/miniatura_009.png" alt="Cuadrícula vacía del Crucigrama Gamberro 009">
       <div>
-        <a class="play-btn" id="playBtn" href="Crucigrama_gamberro_008.html?ref=home">JUGAR</a>
-      </div>
-    </section>
-
-    <section class="previous">
-      <h2>Crucigramas gamberros online gratuitos en español, publicados de vez en cuando</h2>
-      <p class="previous-sub">Cada Crucigrama Gamberro es distinto — mismo espíritu, pistas nuevas.</p>
-      <div class="previous-list">
-      <div class="prev-item prev-item-play">
-        <a class="prev-link" href="CRUCIGRAMA_GAMBERRO_006.html?ref=home" data-num="006">
-          <img src="miniaturas/miniatura_006.png" alt="Crucigrama Gamberro 006 (cuadricula vacia)" loading="lazy">
-          <span class="prev-num">Nº 006</span>
-          <span class="prev-cta">JUGAR &rarr;</span>
-        </a>
-      </div>
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 005</figcaption>
-      </figure>
-      <figure class="prev-item">
-        <img src="miniaturas/miniatura_004.png" alt="Crucigrama Gamberro 004 (cuadricula vacia)" loading="lazy">
-        <figcaption>Nº 004</figcaption>
-      </figure>
+        <a class="play-btn" id="playBtn" href="Crucigrama_gamberro_009.html?ref=home">JUGAR</a>
       </div>
     </section>
 
@@ -293,12 +270,37 @@
       </a>
     </section>
 
+    <section class="previous">
+      <h2>Crucigramas gamberros online gratuitos en español, publicados de vez en cuando</h2>
+      <p class="previous-sub">Cada Crucigrama Gamberro es distinto — mismo espíritu, pistas nuevas.</p>
+      <div class="previous-list">
+      <div class="prev-item prev-item-play">
+        <a class="prev-link" href="Crucigrama_gamberro_008.html?ref=home" data-num="008">
+          <img src="miniaturas/miniatura_008.png" alt="Crucigrama Gamberro 008 (cuadricula vacia)" loading="lazy">
+          <span class="prev-num">Nº 008</span>
+          <span class="prev-cta">JUGAR &rarr;</span>
+        </a>
+      </div>
+      <div class="prev-item prev-item-play">
+        <a class="prev-link" href="CRUCIGRAMA_GAMBERRO_006.html?ref=home" data-num="006">
+          <img src="miniaturas/miniatura_006.png" alt="Crucigrama Gamberro 006 (cuadricula vacia)" loading="lazy">
+          <span class="prev-num">Nº 006</span>
+          <span class="prev-cta">JUGAR &rarr;</span>
+        </a>
+      </div>
+      <figure class="prev-item">
+        <img src="miniaturas/miniatura_005.png" alt="Crucigrama Gamberro 005 (cuadricula vacia)" loading="lazy">
+        <figcaption>Nº 005</figcaption>
+      </figure>
+      </div>
+    </section>
+
     <section class="next-signup">
       <h2>¿Quieres el siguiente?</h2>
-      <p>Salen de vez en cuando. <strong>Déjame tu correo y te aviso cuando publique otro Crucigrama Gamberro.</strong></p>
+      <p>Salen de vez en cuando.<br><strong>Déjame tu correo y te aviso cuando publique el siguiente.</strong></p>
       <div class="signup-form" id="signupForm">
         <input type="email" id="signupEmail" class="signup-input" placeholder="tu@email.com" autocomplete="email" inputmode="email" aria-label="Tu correo">
-        <button type="button" class="next-btn" id="nextBtn">AVÍSAME</button>
+        <button type="button" class="next-btn" id="nextBtn">Avísame</button>
       </div>
       <p class="signup-msg" id="signupMsg" aria-live="polite"></p>
       <p class="signup-nota" id="signupNota">Solo para eso. Sin spam, y te das de baja cuando quieras.</p>
@@ -308,6 +310,7 @@
   <footer>
   <nav class="archive" aria-label="Crucigramas anteriores">
     <p>Crucigramas anteriores:
+      <a href="Crucigrama_gamberro_008.html" data-num="008">Crucigrama Gamberro 008</a> &middot;
       <a href="CRUCIGRAMA_GAMBERRO_006.html" data-num="006">Crucigrama Gamberro 006</a></p>
   </nav>
     <p><a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101;">Contacto</a> · <a href="/privacidad.html">Privacidad</a></p>
@@ -342,7 +345,7 @@
       gcSendThen(path, title, function () { location.href = el.href; });
     });
   }
-  trackLink(document.getElementById("playBtn"), "/home-jugar-008", "Portada: JUGAR 008");
+  trackLink(document.getElementById("playBtn"), "/home-jugar-009", "Portada: JUGAR 009");
   trackLink(document.getElementById("hofLink"), "/home-hall-of-fame", "Portada: Hall of Fame");
   // archivo del pie: enlaces normales; solo se mide el clic
   Array.prototype.forEach.call(document.querySelectorAll("nav.archive a"), function (a) {
@@ -355,7 +358,7 @@
 
   function noop() {}
 
-  // Suscripcion: mismo Apps Script que "Quiero otro" en los crucigramas
+  // Suscripcion: mismo Apps Script, textos y mensajes que "Quiero otro" en los crucigramas
   // (doc: Herramientas/docs/SUSCRIPCIONES.md)
   var SUSCRIPCION_URL = "https://script.google.com/macros/s/AKfycbzdT861LeRF10cIjYhGZSR8Lmj5MV_1t1aIF0_gnprljwpRC5OuzZK_iQt-YhqY3ZTLQA/exec";
   var form = document.getElementById("signupForm");
@@ -378,7 +381,7 @@
     var email = emailInput.value.trim();
     if (!isValidEmail(email)) {
       emailInput.classList.add("invalid");
-      setMsg(email ? "Revisa el correo, no tiene buena pinta." : "Escribe tu correo y te aviso.", "err");
+      setMsg("Revisa el correo, no tiene buena pinta.", "err");
       emailInput.focus();
       return;
     }
