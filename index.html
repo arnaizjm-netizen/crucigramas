@@ -70,6 +70,27 @@
     color: var(--muted);
     font-size: 0.95rem;
   }
+  /* invitacion a compartir bajo la cabecera: discreta, no compite con JUGAR */
+  .share-line {
+    margin: 10px auto 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .share-btn {
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-left: 6px;
+    padding: 5px 12px;
+    border: 1.5px solid var(--accent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .share-btn:hover, .share-btn:focus-visible { background: var(--accent); color: #fff; outline: none; }
   main { width: 100%; max-width: 640px; }
   section { margin-bottom: 36px; }
   .current { text-align: center; }
@@ -236,6 +257,8 @@
     }
     .current-grid, .prev-item img { background: #fdfdfb; }
     .brand-name, .next-signup p a, .signup-msg.ok { color: #7fd19f; }
+    .share-btn { color: #7fd19f; border-color: #7fd19f; }
+    .share-btn:hover, .share-btn:focus-visible { background: #7fd19f; color: #17191a; }
     .signup-input { border-color: #4a4e4c; }
     .signup-input.valid { border-color: #7fd19f; }
     .signup-msg.err, .signup-input.invalid { color: #ff8a7a; border-color: #ff8a7a; }
@@ -247,6 +270,7 @@
   <header class="brand">
     <div class="brand-name">RECREO.ZONE</div>
     <p class="tagline">Crucigramas para gente a la que las pistas demasiado fáciles le parecen una falta de respeto.</p>
+    <p class="share-line">¿Conoces a alguien así? <button type="button" class="share-btn" id="shareBtn" aria-live="polite">PÁSALO</button></p>
   </header>
 
   <main>
@@ -357,6 +381,51 @@
   });
 
   function noop() {}
+
+  // PASALO: menu de compartir del sistema si lo hay (movil); si no, copia el enlace
+  var SHARE_URL = "https://recreo.zone/?ref=pasalo";
+  var shareBtn = document.getElementById("shareBtn");
+  var shareTimer = null;
+  function shareCopied() {
+    shareBtn.textContent = "Enlace copiado";
+    clearTimeout(shareTimer);
+    shareTimer = setTimeout(function () { shareBtn.textContent = "PÁSALO"; }, 2000);
+  }
+  function shareCopyLegacy() {
+    var ta = document.createElement("textarea");
+    ta.value = SHARE_URL;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (err) {}
+    document.body.removeChild(ta);
+    if (ok) shareCopied();
+  }
+  function shareCopy() {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(SHARE_URL).then(shareCopied, shareCopyLegacy);
+    } else {
+      shareCopyLegacy();
+    }
+  }
+  shareBtn.addEventListener("click", function () {
+    gcSendThen("/home-pasalo", "Portada: PÁSALO", noop);
+    if (navigator.share) {
+      navigator.share({
+        title: "Crucigramas Gamberros",
+        text: "Crucigramas para gente a la que las pistas demasiado fáciles le parecen una falta de respeto.",
+        url: SHARE_URL
+      }).catch(function (err) {
+        // si el usuario cierra el menu no se hace nada; si falla por otra cosa, se copia
+        if (!err || err.name !== "AbortError") shareCopy();
+      });
+    } else {
+      shareCopy();
+    }
+  });
 
   // Suscripcion: mismo Apps Script, textos y mensajes que "Quiero otro" en los crucigramas
   // (doc: Herramientas/docs/SUSCRIPCIONES.md)
