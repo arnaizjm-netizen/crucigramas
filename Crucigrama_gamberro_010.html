@@ -471,6 +471,61 @@
     .siguiente-toast p a, .quiero-otro-mas a { color: #7fd19f; }
     .ia-note { background: #163420; color: #ffa94d; }
   }
+  /* ---------- PDF: hoja limpia (cuadricula vacia + definiciones) ----------
+     El PDF solo se consigue dando el correo ("Enviamelo por email"). La hoja se monta al
+     cargar pero solo se imprime con ?pdf=1 en la direccion (clase modo-pdf en <html>), que
+     es como la abre motor/pdf_crucigrama.py para fabricar el PDF. Si un jugador imprime la
+     pagina (Ctrl+P) sale solo un aviso. Colores fijos en blanco y negro, sin modo oscuro. */
+  .print-link {
+    margin: 14px auto 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+    background: none;
+    box-shadow: none;
+    text-decoration: underline;
+    padding: 4px 8px;
+  }
+  .print-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin-top: 14px; }
+  .print-row .print-link { margin: 0; }
+  .print-link[hidden] { display: none; }
+  .pdf-mail-panel { margin: 10px 0 0; text-align: center; width: 100%; max-width: 640px; }
+  .pdf-mail-panel[hidden] { display: none; }
+  .pdf-mail-aviso { margin: 6px auto 0; max-width: 420px; font-size: 0.78rem; line-height: 1.4; color: var(--muted); }
+  .print-sheet {
+    display: none;
+    background: #fff;
+    color: #000;
+    font-family: Georgia, "Times New Roman", serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* medida fuera de pantalla para ajustar la letra de las definiciones a un A4 */
+  .print-sheet.measuring { display: block; position: absolute; left: -9999px; top: 0; width: 186mm; }
+  .print-aviso { display: none; font-family: Georgia, "Times New Roman", serif; font-size: 14pt; text-align: center; margin-top: 40mm; color: #000; }
+  .ps-title { font-size: 17pt; font-weight: 700; text-align: center; margin: 0 0 1mm; }
+  .ps-sub { font-size: 8.5pt; text-align: center; margin: 0 0 4mm; color: #333; }
+  .ps-grid { border-collapse: collapse; margin: 0 auto 4mm; }
+  .ps-grid td, .ps-grid th { padding: 0; text-align: center; }
+  .ps-grid th { font-size: 8pt; font-weight: 700; color: #000; width: 5mm; height: 5mm; }
+  .ps-grid td { border: 0.35mm solid #000; }
+  .ps-grid td.b { background: #000 !important; }
+  .ps-grid td.l { font-family: -apple-system, "Segoe UI", Arial, sans-serif; font-size: 14pt; font-weight: 700; text-transform: uppercase; }
+  .ps-sol { break-before: page; page-break-before: always; }
+  .ps-defs { column-count: 2; column-gap: 7mm; font-size: 8.6pt; line-height: 1.28; text-align: justify; }
+  .ps-defs h2 { font-size: 10pt; letter-spacing: 0.08em; margin: 0 0 1.5mm; break-after: avoid; }
+  .ps-defs p { margin: 0 0 1.2mm; }
+  .ps-defs .ps-sec + .ps-sec { margin-top: 3mm; }
+  .ps-defs b { font-family: -apple-system, "Segoe UI", Arial, sans-serif; }
+  .ps-foot { font-size: 8pt; text-align: center; margin-top: 4mm; color: #333; }
+  @media print {
+    @page { size: A4 portrait; margin: 10mm 12mm; }
+    html, body { background: #fff !important; color: #000 !important; }
+    body { display: block; padding: 0; min-height: 0; }
+    body > * { display: none !important; }
+    html:not(.modo-pdf) body > .print-aviso { display: block !important; }
+    html.modo-pdf body > .print-sheet { display: block !important; }
+  }
 </style>
 </head>
 <body>
@@ -527,6 +582,16 @@
   </div>
 
 
+  <div class="print-row">
+    <button type="button" class="print-link" id="pdfMailBtn" hidden>📧 Envíamelo por email</button>
+  </div>
+  <div class="quiero-otro-panel pdf-mail-panel" id="pdfMailPanel" hidden>
+    <input type="email" id="pdfMailEmail" class="quiero-otro-input" placeholder="tu@email.com" autocomplete="email" inputmode="email">
+    <button type="button" class="quiero-otro-submit" id="pdfMailSubmit">Envíame el PDF</button>
+    <p class="quiero-otro-msg" id="pdfMailMsg" aria-live="polite"></p>
+    <p class="pdf-mail-aviso" id="pdfMailAviso">Te lo enviamos desde &#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101;. Guardaremos tu correo para avisarte cuando haya crucigramas nuevos; para darte de baja, escribe a &#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101; con el asunto «Baja».</p>
+  </div>
+
   <p class="seo-note">Crucigrama online gratuito en español con juegos de palabras, dobles sentidos, cultura general y pistas con ingenio. Se juega directamente en el navegador y no requiere registro.</p>
   <div class="site-footer"><a href="https://recreo.zone/?ref=crucigrama-pie">Más crucigramas gamberros en RECREO.ZONE →</a></div>
 
@@ -540,6 +605,9 @@
        href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;&#99;&#114;&#117;&#99;&#105;&#103;&#114;&#97;&#109;&#97;&#115;&#64;&#114;&#101;&#99;&#114;&#101;&#111;&#46;&#122;&#111;&#110;&#101;?subject=Quiero%20el%20siguiente&body=Av%C3%ADsame%20cuando%20salga%20el%20pr%C3%B3ximo%20Crucigrama%20Gamberro."
        target="_blank" rel="noopener">QUIERO EL SIGUIENTE</a>
   </div>
+
+<div class="print-sheet" id="printSheet" aria-hidden="true"></div>
+<div class="print-aviso" id="printAviso" aria-hidden="true"></div>
 
 <script>
 (function () {
@@ -1723,6 +1791,191 @@
       })(r2, c2);
     }
   }
+
+  // ---------- hoja del PDF ----------
+  // Hoja para papel: cuadricula vacia numerada por filas y columnas y las definiciones
+  // agrupadas por fila (horizontales) y por columna (verticales), como en el Word.
+  // La solucion va en una segunda pagina. Solo se imprime con ?pdf=1 (asi la abre
+  // motor/pdf_crucigrama.py); a un jugador que imprima la pagina le sale el aviso.
+  if (/[?&]pdf=1(&|$)/.test(location.search)) document.documentElement.classList.add("modo-pdf");
+  (function buildPrintSheet() {
+    var sheet = document.getElementById("printSheet");
+    function el(tag, cls, text) {
+      var e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    }
+    sheet.appendChild(el("div", "ps-title", document.getElementById("titleEl").textContent));
+    var canon = document.querySelector('link[rel="canonical"]');
+    var url = ((canon && canon.href) || "https://recreo.zone/").replace(/^https?:\/\//, "");
+    sheet.appendChild(el("div", "ps-sub", "La solución está en la página siguiente. Juégalo online en " + url));
+    document.getElementById("printAviso").textContent =
+      "¿Lo quieres en papel? Pídelo gratis por email en " + url;
+
+    // cuadricula: casillas de tamaño fijo en mm para que quepa todo en un A4
+    var cellMm = Math.min(10, Math.floor(120 / N));
+    var table = el("table", "ps-grid");
+    var hr = document.createElement("tr");
+    hr.appendChild(el("th"));
+    for (var c = 0; c < N; c++) hr.appendChild(el("th", "", String(c + 1)));
+    table.appendChild(hr);
+    for (var r = 0; r < N; r++) {
+      var tr = document.createElement("tr");
+      tr.appendChild(el("th", "", String(r + 1)));
+      for (var c2 = 0; c2 < N; c2++) {
+        var td = el("td", DATA.black[r][c2] ? "b" : "");
+        td.style.width = td.style.height = cellMm + "mm";
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    sheet.appendChild(table);
+
+    // definiciones: una linea por fila / columna, en el orden de la cuadricula
+    function withStop(t) {
+      t = String(t || "").trim();
+      return /[.!?…)»"”]$/.test(t) ? t : t + ".";
+    }
+    function section(dirLetter, title) {
+      var byLine = {};
+      Object.keys(DATA.segments).forEach(function (id) {
+        var seg = DATA.segments[id];
+        if (seg.dir !== dirLetter || !seg.clue) return;
+        var line = dirLetter === "H" ? seg.cells[0][0] : seg.cells[0][1];
+        var pos = dirLetter === "H" ? seg.cells[0][1] : seg.cells[0][0];
+        (byLine[line] = byLine[line] || []).push({ pos: pos, clue: seg.clue });
+      });
+      var sec = el("div", "ps-sec");
+      sec.appendChild(el("h2", "", title));
+      for (var i = 0; i < N; i++) {
+        if (!byLine[i]) continue;
+        byLine[i].sort(function (a, b) { return a.pos - b.pos; });
+        var p = el("p");
+        p.appendChild(el("b", "", (i + 1) + ". "));
+        p.appendChild(document.createTextNode(byLine[i].map(function (x) { return withStop(x.clue); }).join(" ")));
+        sec.appendChild(p);
+      }
+      return sec;
+    }
+    var defs = el("div", "ps-defs");
+    defs.appendChild(section("H", "HORIZONTALES"));
+    defs.appendChild(section("V", "VERTICALES"));
+    sheet.appendChild(defs);
+    sheet.appendChild(el("div", "ps-foot", "RECREO.ZONE · crucigramas gamberros gratis"));
+
+    // si las definiciones son largas se reduce la letra (hasta 7pt) para que todo quepa
+    // en una hoja: A4 menos margenes = 277mm de alto; se deja un poco de holgura
+    var mm = function (px) { return px * 25.4 / 96; };
+    sheet.classList.add("measuring");
+    for (var pt = 8.6; pt >= 7; pt -= 0.2) {
+      defs.style.fontSize = pt.toFixed(1) + "pt";
+      if (mm(sheet.offsetHeight) <= 268) break;
+    }
+    sheet.classList.remove("measuring");
+
+    // segunda pagina: la misma cuadricula resuelta. Se añade despues de medir para que
+    // no cuente en el ajuste de la primera hoja
+    var sol = el("div", "ps-sol");
+    sol.appendChild(el("div", "ps-title", "Solución"));
+    sol.appendChild(el("div", "ps-sub", document.getElementById("titleEl").textContent));
+    var solTable = table.cloneNode(true);
+    for (var r3 = 0; r3 < N; r3++) {
+      for (var c3 = 0; c3 < N; c3++) {
+        if (DATA.black[r3][c3]) continue;
+        var cell = solTable.rows[r3 + 1].cells[c3 + 1];
+        cell.className = "l";
+        cell.textContent = DATA.solution[r3][c3] || "";
+      }
+    }
+    sol.appendChild(solTable);
+    sol.appendChild(el("div", "ps-foot", "RECREO.ZONE · crucigramas gamberros gratis"));
+    sheet.appendChild(sol);
+  })();
+
+  // ---------- enviar el PDF por email ----------
+  // Lo hace el mismo Apps Script de "Quiero otro" (QUIERO_OTRO_URL) cuando recibe tambien
+  // el nombre del PDF: apunta el correo en la hoja de suscripciones y envia el PDF desde
+  // crucigramas@recreo.zone. El boton no aparece hasta que el script este actualizado y
+  // esto pase a true. Ver docs/IMPRIMIR.md.
+  var ENVIAR_PDF_ACTIVO = true;
+  (function () {
+    if (!ENVIAR_PDF_ACTIVO) return;
+    var toggleBtn = document.getElementById("pdfMailBtn");
+    var panel = document.getElementById("pdfMailPanel");
+    var emailInput = document.getElementById("pdfMailEmail");
+    var submitBtn = document.getElementById("pdfMailSubmit");
+    var msgEl = document.getElementById("pdfMailMsg");
+    var canon = document.querySelector('link[rel="canonical"]');
+    var pagina = ((canon && canon.href) || location.pathname).split("/").pop().split(/[?#]/)[0];
+    var pdfName = pagina.replace(/\.html$/i, "") + ".pdf";
+    toggleBtn.hidden = false;
+
+    function isValidEmail(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    }
+    function msg(text, cls) {
+      msgEl.textContent = text;
+      msgEl.className = "quiero-otro-msg" + (cls ? " " + cls : "");
+    }
+
+    toggleBtn.addEventListener("click", function () {
+      gcEvent("-pdf-email", "PDF por email: abre");
+      panel.hidden = false;
+      toggleBtn.disabled = true;
+      emailInput.focus();
+    });
+    emailInput.addEventListener("input", function () {
+      var v = emailInput.value.trim();
+      emailInput.classList.remove("valid", "invalid");
+      if (v) emailInput.classList.add(isValidEmail(v) ? "valid" : "invalid");
+      msg("");
+    });
+    emailInput.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") submitBtn.click();
+    });
+    submitBtn.addEventListener("click", function () {
+      var email = emailInput.value.trim();
+      if (!isValidEmail(email)) {
+        emailInput.classList.add("invalid");
+        msg("Revisa el correo, no tiene buena pinta.", "err");
+        return;
+      }
+      submitBtn.disabled = true;
+      emailInput.disabled = true;
+      msg("Enviando...");
+      fetch(QUIERO_OTRO_URL, {
+        method: "POST",
+        body: JSON.stringify({ email: email, pdf: pdfName })
+      }).then(function (r) { return r.json(); }).then(function (data) {
+        if (data.status === "sent") {
+          msg("¡Enviado! Míralo en tu correo (y en spam, por si acaso)." +
+              (data.suscrito === "new" ? " Te avisaremos cuando haya crucigramas nuevos." : ""), "ok");
+          gcEvent("-pdf-email-enviado", "PDF por email: enviado");
+          if (data.suscrito === "new") gcEvent("-quiero-otro-nuevo-pdf", "Quiero otro: suscrito por PDF");
+          emailInput.hidden = true;
+          submitBtn.hidden = true;
+          document.getElementById("pdfMailAviso").hidden = true;
+          return;
+        }
+        if (data.status === "wait") {
+          msg("Ya te lo acabamos de enviar. Espera unos minutos si no te ha llegado.", "err");
+        } else if (data.status === "quota") {
+          msg("Hoy ya no podemos enviar más. Vuelve a probar mañana.", "err");
+        } else {
+          throw new Error("bad status");
+        }
+        submitBtn.disabled = false;
+        emailInput.disabled = false;
+      }).catch(function () {
+        msg("No se ha podido enviar. Inténtalo de nuevo en un momento.", "err");
+        submitBtn.disabled = false;
+        emailInput.disabled = false;
+      });
+    });
+  })();
+  // cuenta cada intento de imprimir la pagina (Ctrl+P), que solo saca el aviso
+  window.addEventListener("beforeprint", function () { gcEvent("-imprimir", "Imprimir"); });
 
   // ---------- estado inicial al cargar ----------
   (function initFromLoadedState() {
