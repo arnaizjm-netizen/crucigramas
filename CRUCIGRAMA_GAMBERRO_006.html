@@ -184,9 +184,9 @@
     align-items: center;
     justify-content: center;
     background: var(--bg);
-    color: var(--muted);
-    font-size: clamp(0.5rem, 1.6vw, 0.85rem);
-    font-weight: 600;
+    color: var(--text);
+    font-size: clamp(0.62rem, 2.1vw, 1rem);
+    font-weight: 800;
     user-select: none;
   }
   .corner { background: var(--bg); }
@@ -1112,12 +1112,33 @@
     return next || null;
   }
 
+  // tras escribir una letra: si a la palabra le quedan casillas vacias, salta a la
+  // siguiente vacia (y si no hay ninguna despues, a la primera vacia del principio),
+  // saltandose las ya rellenas; si la palabra ya esta llena, avanza de una en una
+  // como siempre, para poder corregir letras
+  function nextCellAfterTyping(r, c, dir) {
+    var segId = segIdFor(r, c, dir);
+    if (!segId) return null;
+    var cells = segOf(segId).cells;
+    var idx = cells.findIndex(function (rc) { return rc[0] === r && rc[1] === c; });
+    var isEmpty = function (rc) { return !state.grid[rc[0]][rc[1]]; };
+    for (var i = idx + 1; i < cells.length; i++) if (isEmpty(cells[i])) return cells[i];
+    for (var j = 0; j < idx; j++) if (isEmpty(cells[j])) return cells[j];
+    return cells[idx + 1] || null;
+  }
+
   // cuando force es true, la direccion pedida se respeta aunque el tramo en
   // esa direccion mida 1 sola casilla (p.ej. saltos de Tab o flechas)
   var forcedDirForNextFocus = null;
 
+  // ultima casilla que el jugador ha tocado/pinchado; se borra cuando el cursor se
+  // mueve solo (al escribir, flechas, Tab...), para que tocar la casilla a la que
+  // ha saltado el cursor no cuente como "segundo toque" y no cambie la direccion
+  var lastTapped = null;
+
   function moveTo(r, c, preferredDir, force) {
     if (!inputs[r] || !inputs[r][c]) return;
+    lastTapped = null;
     if (force) forcedDirForNextFocus = preferredDir;
     inputs[r][c].focus();
     selectCell(r, c, preferredDir, force);
@@ -1767,7 +1788,9 @@
         inp.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
         inp.addEventListener("pointerdown", function () {
-          if (document.activeElement === inp && state.selR === r && state.selC === c) {
+          var segundoToque = lastTapped === inp;
+          lastTapped = inp;
+          if (segundoToque && document.activeElement === inp && state.selR === r && state.selC === c) {
             var other = state.dir === "H" ? "V" : "H";
             var segId = segIdFor(r, c, other);
             if (segId) {
@@ -1824,7 +1847,7 @@
                 gcEventPartida("-palabra-" + segId, "Palabra resuelta " + segId);
               });
             })();
-            var next = neighborInSegment(r, c, state.dir, 1);
+            var next = nextCellAfterTyping(r, c, state.dir);
             if (next) moveTo(next[0], next[1], state.dir);
           }
 
