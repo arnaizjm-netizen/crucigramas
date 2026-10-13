@@ -574,6 +574,67 @@
     html:not(.modo-pdf) body > .print-aviso { display: block !important; }
     html.modo-pdf body > .print-sheet { display: block !important; }
   }
+
+  /* ---------- MOVIL: teclado propio + definicion encima (prueba) ---------- */
+  html.kb-movil .ia-note.kb-oculta, html.kb-movil .save-note.kb-oculta { display: none; }
+  html.kb-movil body { padding-top: 6px; }
+  html.kb-movil h1 { font-size: 1rem; margin: 2px 0 4px; }
+  html.kb-movil .home-link { font-size: 0.72rem; }
+  html.kb-movil .ia-note { font-size: 0.78rem; padding: 5px 10px; margin: 2px 0 6px; }
+  html.kb-movil .save-note { font-size: 0.72rem; margin: -2px 0 6px; }
+  html.kb-movil .toolbar { flex-wrap: nowrap; gap: 6px; margin-bottom: 6px; }
+  html.kb-movil .timer { font-size: clamp(0.72rem, 3.6vw, 0.9rem); padding: 4px 6px; min-width: 0; flex: 0 0 auto; }
+  html.kb-movil .buttons { flex-wrap: nowrap; gap: 4px; }
+  html.kb-movil .buttons button, html.kb-movil .buttons .btn-link { padding: 5px 7px; font-size: clamp(0.68rem, 3.4vw, 0.82rem); }
+  html.kb-movil .grid-wrap { margin-bottom: 8px; }
+  .kb-dock { display: none; }
+  html.kb-movil .kb-dock {
+    display: block;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: #e4e6e3;
+    border-top: 1px solid #c9ccc8;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    box-sizing: border-box;
+    -webkit-user-select: none; user-select: none;
+    touch-action: manipulation;
+  }
+  html.kb-movil .kb-dock.kb-fin { display: none; }
+  .kb-pista { display: flex; align-items: stretch; gap: 4px; margin: 0 2px 6px; }
+  .kb-flecha {
+    flex: 0 0 34px; padding: 0; font-size: 1.4rem; font-weight: 700;
+    background: #fff; border-radius: 8px; box-shadow: 0 1px 1px rgba(0,0,0,0.15);
+    color: var(--text);
+  }
+  html.kb-movil .defs-panel {
+    flex: 1 1 auto; width: auto; max-width: none; margin: 0;
+    position: static; padding: 6px 10px; border-radius: 8px;
+    box-shadow: none; border-left: 4px solid var(--accent);
+    font-size: 0.9rem; line-height: 1.25;
+  }
+  html.kb-movil .defs-label { display: inline; font-size: 0.9rem; font-weight: 800; color: var(--accent); text-transform: none; letter-spacing: 0; }
+  html.kb-movil .defs-label::after { content: " · "; color: var(--muted); }
+  html.kb-movil .defs-text { display: inline; font-size: 0.9rem; line-height: 1.25; }
+  html.kb-movil .grid { grid-template-columns: repeat(var(--kb-n), minmax(0, 1fr)) !important; grid-template-rows: repeat(var(--kb-n), minmax(0, 1fr)) !important; }
+  html.kb-movil .cell-white input { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+  html.kb-movil .cell-white input { font-size: calc(var(--kb-celda, 24px) * 0.62); min-height: 0; }
+  html.kb-movil .hdr { font-size: calc(var(--kb-celda, 24px) * 0.5); overflow: hidden; }
+  .kb-fila { display: flex; justify-content: center; gap: 4px; margin-bottom: 6px; }
+  .kb-fila:last-child { margin-bottom: 0; }
+  .kb-tecla {
+    flex: 1 1 0; max-width: 44px; height: 44px; padding: 0;
+    font-size: 1.15rem; font-weight: 600;
+    background: #fff; color: #1f2320;
+    border-radius: 6px; box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  }
+  .kb-tecla:active, .kb-flecha:active { background: #cfd3ce; transform: none; }
+  .kb-borrar { flex: 1.6 1 0; max-width: 72px; font-size: 1.2rem; }
+  @media (prefers-color-scheme: dark) {
+    html.kb-movil .kb-dock { background: #1c1f1d; border-top-color: #333; }
+    .kb-tecla, .kb-flecha { background: #3a3e3b; color: #eee; }
+    .kb-tecla:active, .kb-flecha:active { background: #555; }
+    html.kb-movil .defs-label { color: #7fd19f; }
+  }
+  @media print { .kb-dock { display: none !important; } }
 </style>
 </head>
 <body>
@@ -2121,6 +2182,162 @@
     fixDefsHeight();
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(fixDefsHeight);
     selectCell(state.selR, state.selC, state.dir);
+  })();
+
+
+  // ---------- MOVIL: teclado propio con la definicion encima (prueba) ----------
+  // Solo en pantallas tactiles pequenas. En el PC no cambia nada. Las casillas siguen siendo
+  // los mismos <input> (inputmode="none": el movil no saca su teclado); las teclas propias
+  // escriben en la casilla activa usando los mismos eventos que el teclado normal.
+  (function tecladoMovil() {
+    var tactil = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    var pequena = Math.min(screen.width, screen.height) < 700;
+    if (!tactil || !pequena) return;
+    document.documentElement.classList.add("kb-movil");
+
+    var panel = document.getElementById("defsPanel");
+    var dock = document.createElement("div");
+    dock.className = "kb-dock";
+    var pista = document.createElement("div");
+    pista.className = "kb-pista";
+    function boton(cls, txt, aria) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = cls; b.textContent = txt;
+      if (aria) b.setAttribute("aria-label", aria);
+      return b;
+    }
+    var antes = boton("kb-flecha", "‹", "Definición anterior");
+    var despues = boton("kb-flecha", "›", "Definición siguiente");
+    pista.appendChild(antes);
+    pista.appendChild(panel);
+    pista.appendChild(despues);
+    dock.appendChild(pista);
+
+    var filas = ["QWERTYUIOP", "ASDFGHJKLÑ", "ZXCVBNM"];
+    filas.forEach(function (fila, i) {
+      var f = document.createElement("div");
+      f.className = "kb-fila";
+      fila.split("").forEach(function (L) {
+        var k = boton("kb-tecla", L);
+        k.dataset.letra = L;
+        f.appendChild(k);
+      });
+      if (i === 2) {
+        var del = boton("kb-tecla kb-borrar", "⌫", "Borrar");
+        del.dataset.borrar = "1";
+        f.appendChild(del);
+      }
+      dock.appendChild(f);
+    });
+    document.body.appendChild(dock);
+
+    gridEl.style.setProperty("--kb-n", String(N + 1));
+    // sin teclado del movil que esquivar: en vez de centrar la casilla, solo se asegura
+    // de que la cuadricula entera se vea entre la barra de arriba y el teclado propio
+    function verCuadricula() { gridEl.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    // casillas de solo lectura y sin seleccion de texto: asi iOS no saca su menu de
+    // "Pegar / Autorrellenar" al tocarlas; las letras las pone el teclado propio
+    function noop() {}
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+      if (!inputs[r][c]) continue;
+      inputs[r][c].setAttribute("inputmode", "none");
+      inputs[r][c].readOnly = true;
+      inputs[r][c].scrollIntoView = verCuadricula;
+      inputs[r][c].select = noop;
+    }
+    // el toque en la casilla no llega al navegador (ni menu ni lupa): la enfocamos nosotros
+    gridEl.addEventListener("touchstart", function (e) {
+      var inp = e.target && e.target.closest && e.target.closest(".cell-white input");
+      if (!inp || e.touches.length > 1) return;
+      e.preventDefault();
+      inp.focus({ preventScroll: true });
+    }, { passive: false });
+    gridEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    // por si hay un teclado fisico (tablet): las letras siguen funcionando
+    document.addEventListener("keydown", function (e) {
+      var inp = document.activeElement;
+      if (!inp || !inp.dataset || inp.dataset.r === undefined || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!/^[a-zñ]$/i.test(e.key)) return;
+      e.preventDefault();
+      if (state.finished) return;
+      ocultarAvisos();
+      inp.value = e.key.toUpperCase();
+      inp.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    function casillaActiva() {
+      var inp = inputs[state.selR] && inputs[state.selR][state.selC];
+      if (inp) return inp;
+      for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (inputs[r][c]) return inputs[r][c];
+      return null;
+    }
+    function tecla(inp, key, shift) {
+      inp.dispatchEvent(new KeyboardEvent("keydown", { key: key, shiftKey: !!shift, bubbles: true, cancelable: true }));
+    }
+    function pulsar(btn) {
+      if (state.finished) return;
+      var inp = casillaActiva();
+      if (!inp) return;
+      ocultarAvisos();
+      if (document.activeElement !== inp) {
+        moveTo(+inp.dataset.r, +inp.dataset.c, state.dir, true);
+      }
+      if (btn.dataset.letra) {
+        inp.value = btn.dataset.letra;
+        inp.dispatchEvent(new Event("input", { bubbles: true }));
+      } else if (btn.dataset.borrar) {
+        tecla(inp, "Backspace");
+      } else if (btn === antes || btn === despues) {
+        tecla(inp, "Tab", btn === antes);
+      }
+    }
+    // pointerdown + preventDefault: el foco se queda en la casilla y la respuesta es inmediata
+    dock.addEventListener("pointerdown", function (e) {
+      var btn = e.target.closest && e.target.closest(".kb-tecla, .kb-flecha");
+      if (!btn) return;
+      e.preventDefault();
+      pulsar(btn);
+    });
+    dock.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest(".kb-tecla, .kb-flecha")) e.preventDefault();
+    });
+
+    // los dos avisos de arriba se ven al entrar y se esconden con la primera tecla (no al tocar
+    // la casilla: la cuadricula crece al esconderlos y el dedo caeria en otra casilla)
+    var avisosOcultos = false;
+    function ocultarAvisos() {
+      if (avisosOcultos) return;
+      avisosOcultos = true;
+      document.getElementById("iaNote").classList.add("kb-oculta");
+      document.getElementById("saveNote").classList.add("kb-oculta");
+      ajustar();
+      window.scrollTo(0, 0);
+    }
+
+    // la cuadricula ocupa todo el hueco entre la barra de arriba y el teclado
+    function ajustar() {
+      if (state.finished || panel.style.display === "none") {
+        dock.classList.add("kb-fin");
+        document.body.style.paddingBottom = "";
+        document.documentElement.style.scrollPaddingBottom = "";
+        gridEl.style.width = "";
+        return;
+      }
+      var hDock = dock.offsetHeight;
+      document.body.style.paddingBottom = (hDock + 12) + "px";
+      document.documentElement.style.scrollPaddingBottom = hDock + "px";
+      var arriba = gridEl.getBoundingClientRect().top + window.scrollY;
+      var hueco = window.innerHeight - hDock - arriba - 10;
+      var ancho = Math.min(window.innerWidth * 0.97, 640);
+      var w = Math.max(200, Math.min(ancho, hueco));
+      gridEl.style.width = w + "px";
+      gridEl.style.setProperty("--kb-celda", (w / (N + 1)) + "px");
+    }
+    new MutationObserver(ajustar).observe(panel, { attributes: true, attributeFilter: ["style"] });
+    window.addEventListener("resize", function () { setTimeout(ajustar, 160); });
+    fixDefsHeight();
+    ajustar();
+    setTimeout(ajustar, 300);
   })();
 
 })();
