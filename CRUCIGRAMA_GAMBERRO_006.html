@@ -2234,7 +2234,13 @@
     gridEl.style.setProperty("--kb-n", String(N + 1));
     // sin teclado del movil que esquivar: en vez de centrar la casilla, solo se asegura
     // de que la cuadricula entera se vea entre la barra de arriba y el teclado propio
-    function verCuadricula() { gridEl.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    // y si ya se ve entera (lo normal, porque se dimensiona para caber), no mueve nada
+    function verCuadricula() {
+      var g = gridEl.getBoundingClientRect();
+      var techo = dock.getBoundingClientRect().top;
+      if (g.top >= -2 && g.bottom <= techo + 2) return;
+      window.scrollBy({ top: g.bottom > techo ? Math.min(g.bottom - techo + 6, g.top) : g.top - 6, behavior: "smooth" });
+    }
     // casillas de solo lectura y sin seleccion de texto: asi iOS no saca su menu de
     // "Pegar / Autorrellenar" al tocarlas; las letras las pone el teclado propio
     function noop() {}
@@ -2244,6 +2250,8 @@
       inputs[r][c].readOnly = true;
       inputs[r][c].scrollIntoView = verCuadricula;
       inputs[r][c].select = noop;
+      // al saltar de casilla (escribir, flechas, Tab) el navegador no debe desplazar la pagina
+      inputs[r][c].focus = (function (f) { return function () { f.call(this, { preventScroll: true }); }; })(inputs[r][c].focus);
     }
     // el toque en la casilla no llega al navegador (ni menu ni lupa): la enfocamos nosotros
     gridEl.addEventListener("touchstart", function (e) {
@@ -2292,10 +2300,16 @@
       }
     }
     // pointerdown + preventDefault: el foco se queda en la casilla y la respuesta es inmediata
+    // una pulsacion = una letra: si el movil manda dos eventos por el mismo toque, el segundo se ignora
+    var ultimaPulsacion = { id: null, t: 0 };
     dock.addEventListener("pointerdown", function (e) {
       var btn = e.target.closest && e.target.closest(".kb-tecla, .kb-flecha");
       if (!btn) return;
       e.preventDefault();
+      var ahora = Date.now();
+      if (e.isPrimary === false) return;
+      if (ultimaPulsacion.id === e.pointerId && ahora - ultimaPulsacion.t < 120) return;
+      ultimaPulsacion = { id: e.pointerId, t: ahora };
       pulsar(btn);
     });
     dock.addEventListener("click", function (e) {
