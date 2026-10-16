@@ -180,6 +180,7 @@
   .facil-dlg-box p + p { margin-top: -8px; }
   .facil-dlg-btns3 { flex-direction: column; align-items: stretch; gap: 8px; }
   #facilIa { background: #1f4f7a; color: #fff; }
+  .dime-btn { display: inline-block; margin-left: 8px; padding: 1px 9px; border: 0; border-radius: 999px; background: #1f4f7a; color: #fff; font: inherit; font-size: 0.8em; font-weight: 700; line-height: 1.5; white-space: nowrap; cursor: pointer; vertical-align: baseline; }
   .drae-link { display: inline-block; margin-left: 8px; font-size: 0.85em; font-weight: 700; color: #1f4f7a; white-space: nowrap; }
   .facil-aviso { margin: 0 0 10px; font-size: 0.9rem; color: #1f4f7a; font-weight: 700; }
   #opinionLink { background: var(--accent); color: #fff; }
@@ -1314,6 +1315,17 @@
       });
       textEl.appendChild(drae);
     }
+    if (state.facil && !isSegmentComplete(segId)) {
+      var dime = document.createElement("button");
+      dime.type = "button";
+      dime.className = "dime-btn";
+      dime.textContent = "Dime esta";
+      dime.addEventListener("click", function (ev) {
+        ev.stopPropagation();   // no copia la definicion
+        dimeEsta(segId);
+      });
+      textEl.appendChild(dime);
+    }
     fitDefsText();
 
     defsShownCount++;
@@ -2187,6 +2199,22 @@
           }
         });
       })(r2, c2);
+    }
+  }
+
+  // ---------- "Dime esta": en facilon, regala la palabra seleccionada ----------
+  function dimeEsta(segId) {
+    if (!state.facil || state.finished || !DATA.segments[segId] || isSegmentComplete(segId)) return;
+    if (!state.regalos) state.regalos = { cells: (DATA.gifts.cells || []).slice(), words: (DATA.gifts.words || []).slice() };
+    if (state.regalos.words.indexOf(segId) < 0) state.regalos.words.push(segId);
+    setGifts(state.regalos);
+    applyGifts();
+    saveState();
+    gcEventPartida("-dime-" + segId, "Dime esta " + segId);
+    selectCell(state.selR, state.selC, state.dir, true);
+    if (isGridFull()) {
+      if (isGridAllCorrect()) finishGame();
+      else autoComprobar();
     }
   }
 
