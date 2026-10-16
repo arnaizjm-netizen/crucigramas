@@ -2109,7 +2109,7 @@
     applyGifts();
     saveState();
     selectCell(state.selR, state.selC, state.dir);
-    gcEventPartida("-facilon-" + origen, "Modo facilón (" + origen + ")");
+    gcEventPartida("-facilon-" + origen, origen === "boton" ? "Modo facilón (aceptado)" : "Modo facilón (" + origen + ")");
     if (isGridFull()) {
       if (isGridAllCorrect()) finishGame();
       else autoComprobar();
