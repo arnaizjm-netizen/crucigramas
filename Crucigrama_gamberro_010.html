@@ -654,6 +654,11 @@
     html.kb-movil .defs-label { color: #7fd19f; }
   }
   @media print { .kb-dock { display: none !important; } }
+  /* aviso "Copiado" encima del teclado propio (si no, el teclado lo tapa) */
+  html.kb-movil .toast { z-index: 70; font-size: 1rem; font-weight: 700; padding: 9px 18px; white-space: nowrap; }
+  html.kb-movil .defs-panel { transition: background-color 0.25s ease; }
+  html.kb-movil .defs-panel.copiado { background-color: #c8ecd3; }
+  @media (prefers-color-scheme: dark) { html.kb-movil .defs-panel.copiado { background-color: #2f5a3d; } }
   /* tablet: teclado centrado, teclas y definicion mas grandes */
   html.kb-tablet .kb-dock { padding-left: max(8px, calc(50% - 400px)); padding-right: max(8px, calc(50% - 400px)); }
   html.kb-tablet .kb-tecla { max-width: 66px; height: 54px; font-size: 1.4rem; }
@@ -1889,6 +1894,9 @@
   var toastTimeout = null;
   function showToast(msg, ms) {
     toastEl.textContent = msg;
+    // con el teclado propio abajo, el aviso va justo encima de la definicion
+    var dockEl = document.documentElement.classList.contains("kb-movil") && document.querySelector(".kb-dock");
+    toastEl.style.bottom = dockEl && dockEl.offsetHeight ? (window.innerHeight - dockEl.getBoundingClientRect().top + 10) + "px" : "";
     toastEl.classList.add("show");
     clearTimeout(toastTimeout);
     toastTimeout = setTimeout(function () { toastEl.classList.remove("show"); }, ms || 1800);
@@ -2001,7 +2009,10 @@
       return;
     }
     navigator.clipboard.writeText(text).then(function () {
-      showToast("Copiado ✓");
+      showToast("Definición copiada ✓");
+      var p = document.querySelector(".defs-panel");
+      p.classList.add("copiado");
+      setTimeout(function () { p.classList.remove("copiado"); }, 900);
     }).catch(function () {
       showToast("No se pudo copiar");
     });
