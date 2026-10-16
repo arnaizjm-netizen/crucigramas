@@ -905,7 +905,8 @@
     siguienteMostrado: false, // el aviso "quiero el siguiente" ya salio en esta partida
     recordatorioIaMostrado: false, // el recordatorio de la IA ya salio en esta partida
     dificultadVoto: null, // "facil" | "normal" | "dificil" una vez votado; no se puede cambiar
-    facil: false         // modo facilon activado en esta partida (no entra en el Hall of Fame)
+    facil: false,        // modo facilon activado en esta partida (no entra en el Hall of Fame)
+    regalos: null        // regalos de esta partida en facilon ({cells, words}); null = los fijos de regalos.json
   };
 
   for (var r = 0; r < N; r++) {
@@ -941,7 +942,8 @@
         siguienteMostrado: state.siguienteMostrado,
         recordatorioIaMostrado: state.recordatorioIaMostrado,
         dificultadVoto: state.dificultadVoto,
-        facil: state.facil
+        facil: state.facil,
+        regalos: state.regalos
       }));
     } catch (e) { /* almacenamiento no disponible: se ignora */ }
   }
@@ -976,6 +978,7 @@
     state.recordatorioIaMostrado = !!saved.recordatorioIaMostrado;
     state.dificultadVoto = (typeof saved.dificultadVoto === "string") ? saved.dificultadVoto : null;
     state.facil = !!saved.facil;
+    state.regalos = (saved.regalos && typeof saved.regalos === "object") ? saved.regalos : null;
   }
 
   loadState();
@@ -1050,16 +1053,65 @@
   // ---------- modo facilon ----------
   var giftMap = {};      // "r,c" -> true, casillas regaladas
   var giftWords = {};    // segId -> true, palabras regaladas (llevan enlace al DRAE)
-  (function buildGifts() {
-    var g = DATA.gifts || { cells: [], words: [] };
+  function setGifts(g) {
+    giftMap = {};
+    giftWords = {};
+    g = g || { cells: [], words: [] };
     (g.cells || []).forEach(function (rc) { giftMap[rc[0] + "," + rc[1]] = true; });
     (g.words || []).forEach(function (id) {
       if (!DATA.segments[id]) return;
       giftWords[id] = true;
       DATA.segments[id].cells.forEach(function (rc) { giftMap[rc[0] + "," + rc[1]] = true; });
     });
-  })();
+  }
+  setGifts(DATA.gifts);
+  // el crucigrama tiene facilon si tiene regalos fijos en regalos.json
   var hayRegalos = Object.keys(giftMap).length > 0;
+  // partida ya en facilon: sus regalos guardados (las antiguas, sin guardar, usaban los fijos)
+  if (state.facil && state.regalos) setGifts(state.regalos);
+
+  // Regalos adaptados a la partida (carita): tantas palabras y letras como los fijos.
+  // Palabras: la que tiene mas casillas distintas de la solucion (vacias o mal); se dan
+  // por resueltas sus casillas y se repite. Empate: la primera en DATA.segments.
+  // Letras: la primera casilla pendiente de cada una de las palabras a las que mas les
+  // falta despues de las regaladas; si no llegan, las pendientes por fila y columna.
+  function elegirRegalos() {
+    var nPal = (DATA.gifts.words || []).length || 2;
+    var nLet = (DATA.gifts.cells || []).length || 4;
+    var hecho = {};
+    function pendiente(rc) {
+      var k = rc[0] + "," + rc[1];
+      return !hecho[k] && state.grid[rc[0]][rc[1]] !== DATA.solution[rc[0]][rc[1]];
+    }
+    function faltan(id) { return DATA.segments[id].cells.filter(pendiente).length; }
+    var ids = Object.keys(DATA.segments);
+    var words = [];
+    for (var i = 0; i < nPal; i++) {
+      var mejor = null, mejorP = 0;
+      ids.forEach(function (id) {
+        if (words.indexOf(id) >= 0) return;
+        var p = faltan(id);
+        if (p > mejorP) { mejor = id; mejorP = p; }
+      });
+      if (!mejor) break;
+      words.push(mejor);
+      DATA.segments[mejor].cells.forEach(function (rc) { hecho[rc[0] + "," + rc[1]] = true; });
+    }
+    var cells = [];
+    var orden = ids.filter(function (id) { return words.indexOf(id) < 0 && faltan(id) > 0; })
+      .map(function (id, i) { return { id: id, p: faltan(id), i: i }; })
+      .sort(function (a, b) { return (b.p - a.p) || (a.i - b.i); });
+    for (var j = 0; j < orden.length && cells.length < nLet; j++) {
+      var rc = DATA.segments[orden[j].id].cells.filter(pendiente)[0];
+      if (rc) { cells.push([rc[0], rc[1]]); hecho[rc[0] + "," + rc[1]] = true; }
+    }
+    for (var r = 0; r < N && cells.length < nLet; r++) {
+      for (var c = 0; c < N && cells.length < nLet; c++) {
+        if (!DATA.black[r][c] && pendiente([r, c])) { cells.push([r, c]); hecho[r + "," + c] = true; }
+      }
+    }
+    return { cells: cells, words: words };
+  }
   function isGift(r, c) { return state.facil && !!giftMap[r + "," + c]; }
 
   // escribe los regalos en la cuadricula (bloqueados); lo que ya llevaba el jugador se conserva
@@ -1090,6 +1142,8 @@
       if (!document.documentElement.classList.contains("kb-movil")) inputs[r][c].readOnly = false;   // con el teclado propio todas son de solo lectura
       cellDivOf(r, c).classList.remove("cell-gift");
     });
+    state.regalos = null;
+    setGifts(DATA.gifts);
   }
 
   function draeUrl(seg) {
@@ -2115,6 +2169,9 @@
   // ---------- activar el modo facilon ----------
   function activarFacil(origen) {
     state.facil = true;
+    // carita: regalos segun lo que le falta; ?facil: los fijos de regalos.json
+    state.regalos = origen === "boton" ? elegirRegalos() : { cells: DATA.gifts.cells || [], words: DATA.gifts.words || [] };
+    setGifts(state.regalos);
     applyGifts();
     saveState();
     selectCell(state.selR, state.selC, state.dir);
