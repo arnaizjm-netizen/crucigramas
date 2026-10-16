@@ -635,6 +635,18 @@
     html.kb-movil .defs-label { color: #7fd19f; }
   }
   @media print { .kb-dock { display: none !important; } }
+  /* tablet: teclado centrado, teclas y definicion mas grandes */
+  html.kb-tablet .kb-dock { padding-left: max(8px, calc(50% - 400px)); padding-right: max(8px, calc(50% - 400px)); }
+  html.kb-tablet .kb-tecla { max-width: 66px; height: 54px; font-size: 1.4rem; }
+  html.kb-tablet .kb-borrar { max-width: 110px; font-size: 1.5rem; }
+  html.kb-tablet .kb-fila { gap: 6px; margin-bottom: 7px; }
+  html.kb-tablet .kb-flecha { flex-basis: 54px; font-size: 1.8rem; }
+  html.kb-tablet .defs-panel, html.kb-tablet .defs-label, html.kb-tablet .defs-text { font-size: 1.1rem; }
+  html.kb-tablet h1 { font-size: 1.3rem; }
+  @media (orientation: landscape) {
+    html.kb-tablet .kb-tecla { height: 46px; }
+    html.kb-tablet .kb-fila { margin-bottom: 5px; }
+  }
 </style>
 </head>
 <body>
@@ -2190,10 +2202,12 @@
   // los mismos <input> (inputmode="none": el movil no saca su teclado); las teclas propias
   // escriben en la casilla activa usando los mismos eventos que el teclado normal.
   (function tecladoMovil() {
-    var tactil = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-    var pequena = Math.min(screen.width, screen.height) < 700;
-    if (!tactil || !pequena) return;
+    // movil o tablet (el iPad se presenta como un Mac, pero tiene pantalla tactil)
+    var tactil = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+      (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || navigator.userAgent));
+    if (!tactil) return;
     document.documentElement.classList.add("kb-movil");
+    if (Math.min(screen.width, screen.height) >= 600) document.documentElement.classList.add("kb-tablet");
 
     var panel = document.getElementById("defsPanel");
     var dock = document.createElement("div");
