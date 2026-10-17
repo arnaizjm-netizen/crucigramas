@@ -240,6 +240,9 @@
   .cell-white.cell-correct input { color: var(--text); }
   .cell-white.cell-win { background: #e9f7ec; }
   .cell-white.cell-win input { color: var(--win); }
+  .cell-white.cell-win.sel-word { background: var(--select-word); }
+  .cell-white.cell-win.sel-active { background: #fff29a; }
+  .cell-white.cell-win.sel-word input { color: var(--text); }
 
   .defs-panel {
     width: 100%;
@@ -1268,6 +1271,7 @@
     if (state.finished && (finIndicacion || !segId)) {
       // recien terminado: indicacion hasta que toque una palabra
       finIndicacion = false;
+      clearHighlight();   // todo en verde hasta que toque una palabra
       currentDefSeg = null;
       currentDefSegId = null;
       labelEl.textContent = "¡Completado!";
@@ -2050,6 +2054,7 @@
               updateDefs();
             }
           } else if (state.finished && currentDefSegId === null && document.activeElement === inp) {
+            applyHighlight();
             updateDefs();   // terminado: la casilla ya tenia el foco y no salta "focus"
           }
         });
