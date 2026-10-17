@@ -25,6 +25,12 @@
 <meta name="twitter:title" content="Crucigrama Gamberro 011">
 <meta name="twitter:description" content="Crucigrama online en español con ingenio, juegos de palabras, dobles sentidos y cultura general.">
 <meta name="twitter:image" content="https://recreo.zone/og/og_011.png">
+<script>
+  // Modo prueba (?prueba): solo para probar el final. Rellena todo menos la ultima casilla
+  // y no envia nada: ni visita ni eventos de GoatCounter, ni Hall of Fame, ni suscripcion.
+  window.MODO_PRUEBA = /[?&]prueba(=|&|$)/.test(location.search);
+  if (window.MODO_PRUEBA) window.goatcounter = { no_onload: true };
+</script>
 <script data-goatcounter="https://recreozone.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
   :root {
@@ -814,7 +820,9 @@
   var REGALOS = {"cells": [[9, 2], [11, 2], [6, 11], [3, 11]], "words": ["H1_0", "V9_1", "V7_0", "V10_0"]};   // lo pone generate_crossword.py desde motor/regalos.json (null = sin modo facilon)
   DATA.gifts = REGALOS || { cells: [], words: [] };
   var N = DATA.size;
-  var STORAGE_KEY = "crossword_state_" + DATA.id;
+  var MODO_PRUEBA = !!window.MODO_PRUEBA;
+  var STORAGE_KEY = (MODO_PRUEBA ? "crucigrama_prueba_" : "crossword_state_") + DATA.id;
+  if (MODO_PRUEBA) { try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* sin almacenamiento */ } }
 
   // ---------- identificador de partida (ver "IDENTIFICACION DE PARTIDAS Y MEDICION DE REANUDACIONES") ----------
   var ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -1611,6 +1619,7 @@
     renderTimer(0);
     pauseBtn.style.display = "";
     updatePauseUI();
+    if (MODO_PRUEBA) rellenoPrueba();
     saveState();
     selectCell(state.selR, state.selC, state.dir);
   });
@@ -1713,6 +1722,7 @@
     return out;
   }
   function reportAbandon() {
+    if (MODO_PRUEBA) return;
     if (state.finished || !state.started) return;
     var foto = buildFoto();
     if (foto === lastAbandonFoto) return;
@@ -1818,6 +1828,7 @@
         msgEl.className = "quiero-otro-msg err";
         return;
       }
+      if (MODO_PRUEBA) { msgEl.textContent = "Modo prueba: no se apunta a nadie."; msgEl.className = "quiero-otro-msg err"; return; }
       submitBtn.disabled = true;
       emailInput.disabled = true;
       msgEl.textContent = "Enviando...";
@@ -1854,6 +1865,11 @@
   })();
 
   function hofEnter() {
+    if (MODO_PRUEBA) {
+      showToast("Modo prueba: no entras en el Hall of Fame", 3000);
+      window.open("/hall-of-fame.html?crossword=" + hofCrosswordId(), "_blank");
+      return;
+    }
     var ms = state.finalElapsedMs != null ? state.finalElapsedMs : state.elapsedMs;
     var claim = {
       crossword_id: hofCrosswordId(),
@@ -2102,6 +2118,7 @@
 
   // ---------- eventos de GoatCounter (con reintento por si count.js aun no ha cargado) ----------
   function gcEvent(suffix, title, triesLeft) {
+    if (MODO_PRUEBA) return;
     if (window.goatcounter && window.goatcounter.count) {
       window.goatcounter.count({
         path: location.pathname.replace(/\/$/, "") + suffix,
@@ -2504,6 +2521,7 @@
         msg("Revisa el correo, no tiene buena pinta.", "err");
         return;
       }
+      if (MODO_PRUEBA) { msg("Modo prueba: no se apunta a nadie.", "err"); return; }
       submitBtn.disabled = true;
       emailInput.disabled = true;
       msg("Enviando...");
@@ -2539,6 +2557,30 @@
   })();
   // cuenta cada intento de imprimir la pagina (Ctrl+P), que solo saca el aviso
   window.addEventListener("beforeprint", function () { gcEvent("-imprimir", "Imprimir"); });
+
+  // ---------- modo prueba: cuadricula casi llena (al cargar y al Reiniciar) ----------
+  function rellenoPrueba() {
+    var ultima = null;
+    for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (!DATA.black[r][c]) ultima = [r, c];
+    for (var r2 = 0; r2 < N; r2++) {
+      for (var c2 = 0; c2 < N; c2++) {
+        if (DATA.black[r2][c2] || (r2 === ultima[0] && c2 === ultima[1])) continue;
+        state.grid[r2][c2] = DATA.solution[r2][c2];
+        inputs[r2][c2].value = DATA.solution[r2][c2];
+      }
+    }
+    state.started = true;
+    state.firstWordDone = true;
+    state.selR = ultima[0]; state.selC = ultima[1];
+  }
+  if (MODO_PRUEBA) {
+    if (!state.finished) rellenoPrueba();
+    var marca = document.createElement("div");
+    marca.textContent = "MODO PRUEBA · no cuenta";
+    marca.style.cssText = "position:fixed;top:6px;left:6px;z-index:9999;background:#c0392b;color:#fff;" +
+      "font:700 12px/1 sans-serif;padding:5px 8px;border-radius:4px;pointer-events:none;opacity:.9";
+    document.body.appendChild(marca);
+  }
 
   // ---------- estado inicial al cargar ----------
   (function initFromLoadedState() {
