@@ -621,7 +621,9 @@
     -webkit-user-select: none; user-select: none;
     touch-action: manipulation;
   }
-  html.kb-movil .kb-dock.kb-fin { display: none; }
+  html.kb-movil .kb-dock.kb-fin .kb-fila, html.kb-movil .kb-dock.kb-fin .kb-flecha { display: none; }
+  html.kb-movil .kb-dock.kb-fin .kb-pista { margin-bottom: 0; }
+  .fin-explica { margin: -6px 0 14px; font-size: 0.95rem; line-height: 1.4; }
   .kb-pista { display: flex; align-items: stretch; gap: 4px; margin: 0 2px 6px; }
   .kb-flecha {
     flex: 0 0 34px; padding: 0; font-size: 1.4rem; font-weight: 700;
@@ -710,6 +712,7 @@
   </div></div>
   <div class="completado-box" id="completadoBox">
     <p class="completado-title" id="completadoTitle"></p>
+    <p class="fin-explica" id="finExplica">¿Alguna definición que no acabas de pillar? Toca la palabra y pulsa «Explícamela»: Google te cuenta el truco.</p>
     <p class="facil-aviso" id="facilAviso" hidden>Resuelto en modo facilón (no entra en el Hall of Fame).</p>
 
     <div class="completado-actions">
@@ -1158,6 +1161,55 @@
     setGifts(DATA.gifts);
   }
 
+  var finIndicacion = false;   // al terminar, la barra muestra la indicacion hasta que toque una palabra
+  function palabraDe(id) {
+    return DATA.segments[id].cells.map(function (rc) { return DATA.solution[rc[0]][rc[1]]; }).join("");
+  }
+  // otra palabra a la que remite la definicion: "H8", "V6.3", "la 12 vertical", "la siguiente"...
+  // si la fila o columna tiene varias, la que mas letras comparte con la respuesta. regalos.json puede fijarla ("refs").
+  function refDe(segId) {
+    var seg = DATA.segments[segId], ids = Object.keys(DATA.segments), m, dir, label, k = 0, cual;
+    var fijas = (DATA.gifts && DATA.gifts.refs) || {};
+    function de(d, l) { return ids.filter(function (id) { return DATA.segments[id].dir === d && DATA.segments[id].label === l; }); }
+    if (Object.prototype.hasOwnProperty.call(fijas, segId)) {
+      var f = fijas[segId];
+      if (!f || !DATA.segments[f]) return null;
+      return { id: f, cual: "la de " + DATA.segments[f].dir + DATA.segments[f].label };
+    }
+    if ((m = seg.clue.match(/\b([HV])\s?(\d+)(?:\.(\d+))?\b/))) {
+      dir = m[1]; label = m[2]; k = m[3] ? +m[3] : 0; cual = "la de " + m[0];
+    } else if ((m = seg.clue.match(/\b(\d+)\s+(horizontal|vertical)\b/i))) {
+      dir = m[2].toLowerCase() === "horizontal" ? "H" : "V"; label = m[1]; cual = "la " + m[0];
+    } else if ((m = seg.clue.match(/\b(?:la|el)\s+(siguiente|anterior)\b/i))) {
+      var mismas = de(seg.dir, seg.label), i = mismas.indexOf(segId) + (m[1].toLowerCase() === "siguiente" ? 1 : -1);
+      return mismas[i] ? { id: mismas[i], cual: "la " + m[1].toLowerCase() } : null;
+    } else return null;
+    var lista = de(dir, label).filter(function (id) { return id !== segId; });
+    if (!lista.length) return null;
+    // varias en esa fila o columna: la que mas letras comparte con la respuesta (LAICA-LAICO,
+    // ROL-LOR) y, si empatan, la mas larga
+    var propia = palabraDe(segId);
+    function comunes(id) {
+      var resto = propia.split(""), n = 0;
+      palabraDe(id).split("").forEach(function (l) { var i = resto.indexOf(l); if (i >= 0) { n++; resto.splice(i, 1); } });
+      return n;
+    }
+    var elegida = k ? lista[k - 1] : lista.reduce(function (a, b) {
+      var ca = comunes(a), cb = comunes(b);
+      return (cb > ca || (cb === ca && DATA.segments[b].cells.length > DATA.segments[a].cells.length)) ? b : a;
+    });
+    return elegida ? { id: elegida, cual: cual } : null;
+  }
+  function explicaUrl(segId) {
+    var seg = DATA.segments[segId], w = palabraDe(segId);
+    var q = "Explícame por qué, en un crucigrama, la respuesta a la definición «" + seg.clue + "» es " +
+      (w.length === 1 ? "la letra " + w : w) + ".";
+    var ref = refDe(segId);
+    if (ref) q += " En esta definición se refiere a otra palabra del crucigrama, " + ref.cual +
+      ", cuya respuesta es " + palabraDe(ref.id) + " y cuya definición es «" + DATA.segments[ref.id].clue + "».";
+    return "https://www.google.com/search?q=" + encodeURIComponent(q);
+  }
+
   function draeUrl(seg) {
     var w = seg.cells.map(function (rc) { return DATA.solution[rc[0]][rc[1]]; }).join("").toLowerCase();
     return "https://dle.rae.es/" + encodeURIComponent(w);
@@ -1280,16 +1332,16 @@
     var labelEl = document.getElementById("defsLabel");
     var textEl = document.getElementById("defsText");
     textEl.style.fontSize = "";
-    if (state.finished) {
-      // al completar, el panel de definiciones se oculta (ver finishGame): esta rama
-      // solo cubre el caso raro de tocar una casilla despues de terminar.
+    var segId = segIdFor(state.selR, state.selC, state.dir);
+    if (state.finished && (finIndicacion || !segId)) {
+      // recien terminado: indicacion hasta que toque una palabra
+      finIndicacion = false;
       currentDefSeg = null;
       currentDefSegId = null;
       labelEl.textContent = "¡Completado!";
-      textEl.textContent = "";
+      textEl.textContent = "Toca una palabra para ver su definición y que te la expliquen.";
       return;
     }
-    var segId = segIdFor(state.selR, state.selC, state.dir);
     if (!segId) {
       currentDefSeg = null;
       currentDefSegId = null;
@@ -1302,19 +1354,20 @@
     currentDefSegId = segId;
     labelEl.textContent = (seg.dir === "H" ? "Horizontal " : "Vertical ") + seg.label;
     textEl.textContent = seg.clue;
-    if (state.facil && giftWords[segId]) {
-      var drae = document.createElement("a");
-      drae.className = "drae-link";
-      drae.href = draeUrl(seg);
-      drae.target = "_blank";
-      drae.rel = "noopener";
-      drae.textContent = "Ver en el DRAE ↗";
-      drae.addEventListener("click", function (ev) {
+    if (state.finished || (state.facil && giftWords[segId])) {
+      var expl = document.createElement("a");
+      expl.className = "drae-link";
+      expl.href = explicaUrl(segId);
+      expl.target = "_blank";
+      expl.rel = "noopener";
+      expl.textContent = "Explícamela ↗";
+      expl.addEventListener("click", function (ev) {
         ev.stopPropagation();   // no copia la definicion
-        gcEvent("-drae-" + segId, "DRAE " + segId);
+        gcEventPartida("-explica-" + segId, "Explícamela " + segId);
       });
-      textEl.appendChild(drae);
+      textEl.appendChild(expl);
     }
+    if (state.finished) { fitDefsText(); return; }
     if (state.facil && !isSegmentComplete(segId)) {
       var dime = document.createElement("button");
       dime.type = "button";
@@ -1824,6 +1877,7 @@
     state.finalElapsedMs = state.elapsedMs;
     renderTimer(state.finalElapsedMs);
     clearCheckStyles();
+    finIndicacion = true;
     updateDefs();
     for (var r = 0; r < N; r++) {
       for (var c = 0; c < N; c++) {
@@ -1837,7 +1891,8 @@
     document.getElementById("iaNote").style.display = "none";    // ya no hace falta ayuda
     document.getElementById("saveNote").style.display = "none";  // ya no hay nada que reanudar
     document.getElementById("opinionLink").style.display = "none";  // ya esta "Quiero mas" debajo
-    document.getElementById("defsPanel").style.display = "none";    // ya no hay definicion que mostrar
+    // la barra de la definicion sigue visible: tocando una palabra se puede pedir que la expliquen
+    window.dispatchEvent(new Event("resize"));   // en el movil, el teclado se recoge y queda solo la barra
     var totalSec = Math.floor(state.finalElapsedMs / 1000);
     var mm = Math.floor(totalSec / 60), ss = totalSec % 60;
     var pad = function (n) { return n < 10 ? "0" + n : "" + n; };
@@ -2609,7 +2664,7 @@
     function ajustar() {
       if (state.finished || panel.style.display === "none") {
         dock.classList.add("kb-fin");
-        document.body.style.paddingBottom = "";
+        document.body.style.paddingBottom = state.finished ? (dock.offsetHeight + 12) + "px" : "";
         document.documentElement.style.scrollPaddingBottom = "";
         gridEl.style.width = "";
         return;
