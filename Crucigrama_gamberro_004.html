@@ -316,7 +316,14 @@
   #hofEnterBtn, #shareResultBtn { background: var(--win); }
   #quieroOtroBtn { background: var(--empty-hint); color: #1f2320; }
   #quieroOtroBtn:disabled { opacity: 0.6; cursor: default; }
-  #hofEnterBtn[hidden] { display: none; }  /* [hidden] no gana por si solo a display:inline-flex */
+  #hofEnterBtn[hidden] { display: none; }
+  .fin-dlg-box { max-width: 360px; }
+  .fin-dlg-box h2 { font-size: 1.7rem; font-weight: 800; color: var(--accent-dark); margin: 4px 0 10px; }
+  .fin-dlg-box p { font-size: 1rem; color: #333; }
+  #finDlgHof { background: var(--win); width: 100%; margin: 0 0 16px; }
+  #finDlgHof[hidden] { display: none; }
+  #finDlgHof img { width: 28px; height: 28px; }
+  #finDlgVer { background: #1f4f7a; color: #fff; }  /* [hidden] no gana por si solo a display:inline-flex */
 
   /* panel de suscripcion ("Quiero otro"): aparece bajo la fila de acciones al pulsar el boton */
   .quiero-otro-panel { margin-bottom: 16px; }
@@ -708,9 +715,15 @@
     <p>Se borra todo lo que llevas escrito y el tiempo vuelve a 00:00.</p>
     <div class="facil-dlg-btns"><button type="button" id="resetSi">Sí, borrar</button><button type="button" id="resetNo">No, sigo</button></div>
   </div></div>
+  <div class="facil-dlg" id="finDlg" hidden><div class="facil-dlg-box fin-dlg-box" role="dialog" aria-modal="true" aria-labelledby="finDlgTitulo">
+    <h2 id="finDlgTitulo">¡Enhorabuena!</h2>
+    <p id="finDlgFacil" hidden>Resuelto en modo facilón.</p>
+    <button type="button" class="completado-btn" id="finDlgHof" hidden><img id="finDlgHofIcon" width="28" height="28" alt="">Entra en el Hall of Fame</button>
+    <p>¿Alguna definición que no acabas de pillar? Toca la palabra y pulsa «Explícamela»: Google te cuenta el truco.</p>
+    <div class="facil-dlg-btns"><button type="button" id="finDlgVer">Ver las definiciones</button><button type="button" id="finDlgCerrar">Cerrar</button></div>
+  </div></div>
   <div class="completado-box" id="completadoBox">
     <p class="completado-title" id="completadoTitle"></p>
-    <p class="fin-explica" id="finExplica">¿Alguna definición que no acabas de pillar? Toca la palabra y pulsa «Explícamela»: Google te cuenta el truco.</p>
     <p class="facil-aviso" id="facilAviso" hidden>Resuelto en modo facilón (no entra en el Hall of Fame).</p>
 
     <div class="completado-actions">
@@ -1833,8 +1846,42 @@
       // el tiempo (segundos de juego activo, los mismos que ve el jugador) va en el path:
       // GoatCounter guarda un unico titulo por path, asi que en el titulo no serviria
       gcEventPartida("-completado-" + Math.floor(state.finalElapsedMs / 1000), "Crucigrama completado");
+      abrirFinDlg();
     }
   }
+
+  // ---------- ventana de enhorabuena (solo al completar) ----------
+  function abrirFinDlg() {
+    var hof = hofShowButton();
+    var b = document.getElementById("finDlgHof");
+    b.hidden = !hof;
+    if (hof) {
+      var icon = document.getElementById("finDlgHofIcon");
+      if (!icon.getAttribute("src")) icon.src = HOF_ICON;
+    }
+    document.getElementById("finDlgFacil").hidden = !state.facil;
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    document.getElementById("finDlg").hidden = false;
+    finDlgAbierta = Date.now();
+  }
+  var finDlgAbierta = 0;   // el toque que completa (tecla del movil) no debe cerrarla al soltar
+  function cerrarFinDlg() { document.getElementById("finDlg").hidden = true; }
+  document.getElementById("finDlgCerrar").addEventListener("click", cerrarFinDlg);
+  document.getElementById("finDlg").addEventListener("click", function (e) { if (e.target === this && Date.now() - finDlgAbierta > 600) cerrarFinDlg(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !document.getElementById("finDlg").hidden) cerrarFinDlg();
+  });
+  document.getElementById("finDlgHof").addEventListener("click", function () { cerrarFinDlg(); hofEnter(); });
+  document.getElementById("finDlgVer").addEventListener("click", function () {
+    cerrarFinDlg();
+    // primera palabra seleccionada, con su definicion y su "Explicamela"
+    var ids = Object.keys(DATA.segments);
+    if (!ids.length) return;
+    var c0 = DATA.segments[ids[0]].cells[0];
+    selectCell(c0[0], c0[1], DATA.segments[ids[0]].dir, true);
+    var panel = document.getElementById("defsPanel");
+    if (!document.documentElement.classList.contains("kb-movil") && panel.scrollIntoView) panel.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
 
   // ---------- compartir resultado (estilo Wordle) ----------
   document.getElementById("shareResultBtn").addEventListener("click", function () {
