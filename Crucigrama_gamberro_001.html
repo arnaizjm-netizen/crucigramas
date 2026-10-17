@@ -2049,6 +2049,8 @@
               applyHighlight();
               updateDefs();
             }
+          } else if (state.finished && currentDefSegId === null && document.activeElement === inp) {
+            updateDefs();   // terminado: la casilla ya tenia el foco y no salta "focus"
           }
         });
 
